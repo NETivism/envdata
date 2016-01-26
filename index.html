@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Chartist Sample</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="vendor/chartist/chartist.min.css">
+
+	<script type="text/javascript" src="vendor/papaparse/papaparse.min.js"></script>
+	<script type="text/javascript" src="vendor/chartist/chartist.min.js"></script>
+</head>
+<body>
+<div class="ct-chart"></div>
+<script>
+
+Papa.parse("data/sample.csv", {
+  download: true,
+  complete: function(results) {
+    var labels = [];
+    var values = [];
+    var i;
+    for(i = 0; i < results.data.length; i++){
+      var row = results.data[i];
+      if(row.length >= 4){
+        var d = row[3].split(' ');
+        labels.push(d[1].replace(':', ''));
+        values.push(row[4]);
+      }
+    }
+    var data = {
+      // A labels array that can contain any sort of values
+      "labels": labels,
+      // Our series array that contains series objects or in this case series data arrays
+      "series": [
+        values
+      ]
+    };
+
+    // Create a new line chart object where as first parameter we pass in a selector
+    // that is resolving to our chart container element. The Second parameter
+    // is the actual data object.
+    new Chartist.Line('.ct-chart', data);
+  }
+});
+</script>
+</body>
+</html>
