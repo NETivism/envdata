@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Chartist Sample</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="vendor/chartist/chartist.min.css">
+  <style type="text/css">
+  .ct-line.ct-threshold-above, .ct-point.ct-threshold-above, .ct-bar.ct-threshold-above {
+    stroke: #f05b4f;
+  }
+
+  .ct-line.ct-threshold-below, .ct-point.ct-threshold-below, .ct-bar.ct-threshold-below {
+    stroke: #59922b;
+  }
+
+  .ct-area.ct-threshold-above {
+    fill: #f05b4f;
+  }
+
+  .ct-area.ct-threshold-below {
+    fill: #59922b;
+  }
+  .ct-series-a .ct-bar.ct-threshold-above {
+    stroke: #f05b4f;
+  }
+
+  .ct-series-a .ct-bar.ct-threshold-below {
+    stroke: #59922b;
+  }
+  </style>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+  <script type="text/javascript" src="vendor/papaparse/papaparse.min.js"></script>
+  <script type="text/javascript" src="vendor/chartist/chartist.min.js"></script>
+  <script type="text/javascript" src="vendor/chartist-plugin-threshold/chartist-plugin-threshold.min.js"></script>
+  <script type="text/javascript" src="vendor/chartist-plugin-axistitle/chartist-plugin-axistitle.min.js"></script>
+</head>
+<body>
+<h3>SVG</h3>
+<div id="test">
+  <div id="chart-envdata-ta" class="ct-chart"></div>
+</div>
+<script type="text/javascript">
+Papa.parse("http://netivism.github.io/envdata/data/sample.csv", {
+  download: true,
+  complete: function(results) {
+    var labels = [];
+    var values = [];
+    var i;
+    for(i = 0; i < results.data.length; i++){
+      var row = results.data[i];
+      if(row.length >= 4){
+        var d = row[3].split(' ');
+        labels.push(d[1].replace(':', ''));
+        values.push(row[4]);
+      }
+    }
+    var data = {
+      // A labels array that can contain any sort of values
+      "labels": labels,
+      // Our series array that contains series objects or in this case series data arrays
+      "series": [
+        values
+      ]
+    };
+
+    var option = {
+      showArea: true,
+      axisY: {
+        onlyInteger: true
+      },
+      chartPadding: {
+        top: 20,
+        right: 0,
+        bottom: 30,
+        left: 0
+      },
+      plugins: [
+        Chartist.plugins.ctThreshold({
+          threshold: 40
+        }),
+
+        Chartist.plugins.ctAxisTitle({
+          axisX: {
+            axisTitle: 'Time (mins)',
+            axisClass: 'ct-axis-title',
+            offset: {
+              x: 0,
+              y: 40
+            },
+            textAnchor: 'middle',
+          },
+          axisY: {
+            axisTitle: 'Goals',
+            axisClass: 'ct-axis-title',
+            offset: {
+              x: 0,
+              y: 0
+            },
+            textAnchor: 'middle',
+            flipTitle: false
+          }
+        })
+      ]
+    };
+
+    // Create a new line chart object where as first parameter we pass in a selector
+    // that is resolving to our chart container element. The Second parameter
+    // is the actual data object.
+    new Chartist.Line('#chart-envdata-ta', data, option);
+  }
+});
+</script>
+
+<div id="test1">
+  <svg height="250" width="500">
+  <polygon points="220,10 300,210 170,250 123,234" style="fill:lime;stroke:purple;stroke-width:1" />
+  Sorry, your browser does not support inline SVG.
+  </svg>
+</div>
+
+<script type="text/javascript">
+function svg_to_png(container) {
+  var wrapper = document.getElementById(container);
+  var svg = wrapper.querySelector("svg");
+
+  if (typeof window.XMLSerializer != "undefined") {
+      var svgData = (new XMLSerializer()).serializeToString(svg);
+  } else if (typeof svg.xml != "undefined") {
+      var svgData = svg.xml;
+  }
+
+  var canvas = document.createElement("canvas");
+  var svgSize = svg.getBoundingClientRect();
+  canvas.width = svgSize.width;
+  canvas.height = svgSize.height;
+  var ctx = canvas.getContext("2d");
+
+  var img = document.createElement("img");
+  img.setAttribute("src", "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgData))) );
+
+  img.onload = function() {
+    ctx.drawImage(img, 0, 0);
+    var imgsrc = canvas.toDataURL("image/png");
+
+    var newimg = document.createElement("img");
+    newimg.setAttribute("src", imgsrc);
+    document.body.appendChild(newimg);
+
+    /*
+    var a = document.createElement("a");
+    a.download = container+".png";
+    a.href = imgsrc;
+    a.title = "download";
+    var linkText = document.createTextNode("my title text");
+    a.appendChild(linkText);
+    // a.click();
+    document.body.appendChild(a);
+    */
+  };
+}
+
+var checkExist = setInterval(function() {
+   if ($('#chart-envdata-ta > svg').length > 0) {
+    console.log("Exists!");
+    svg_to_png("test");
+    svg_to_png("test1");
+    clearInterval(checkExist);
+   }
+}, 100);
+</script>
+
+<hr/>
+<h3>PNG</h3>
+
+</body>
+</html>
