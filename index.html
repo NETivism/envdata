@@ -1,46 +1,32 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>Chartist Sample</title>
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="vendor/chartist/chartist.min.css">
-
-	<script type="text/javascript" src="vendor/papaparse/papaparse.min.js"></script>
-	<script type="text/javascript" src="vendor/chartist/chartist.min.js"></script>
+  <meta charset="UTF-8">
+  <title>Chartist DEMO</title>
+  <style>
+    body {
+      font-size: 100%;
+      line-height: 1.7;
+    }
+    #page {
+      margin: 0 auto;
+      padding: 20px 10px;
+      width: 1200px;
+    }
+    .page-title {
+      margin-bottom: 60px;
+    }
+  </style>
 </head>
 <body>
-<div class="ct-chart"></div>
-<script>
-
-Papa.parse("data/sample.csv", {
-  download: true,
-  complete: function(results) {
-    var labels = [];
-    var values = [];
-    var i;
-    for(i = 0; i < results.data.length; i++){
-      var row = results.data[i];
-      if(row.length >= 4){
-        var d = row[3].split(' ');
-        labels.push(d[1].replace(':', ''));
-        values.push(row[4]);
-      }
-    }
-    var data = {
-      // A labels array that can contain any sort of values
-      "labels": labels,
-      // Our series array that contains series objects or in this case series data arrays
-      "series": [
-        values
-      ]
-    };
-
-    // Create a new line chart object where as first parameter we pass in a selector
-    // that is resolving to our chart container element. The Second parameter
-    // is the actual data object.
-    new Chartist.Line('.ct-chart', data);
-  }
-});
-</script>
+  <div id="page">
+    <h1 class="page-title">Chartist DEMO</h1>
+    <ul class="demo-list">
+      <li><a href="chartist_line_demo_1.html" target="_blank">Chartist Line：基本範例</a></li>
+      <li><a href="chartist_line_demo_2.html" target="_blank">Chartist Line：加上x/y軸單位與超標效果</a></li>
+      <li><a href="chartist_line_demo_3.html" target="_blank">Chartist Line：加上x/y軸單位與超標效果，超標值高於所有資料值</a></li>
+      <li><a href="chartist_line_demo_4.html" target="_blank">Chartist Line：加上x/y軸單位與超標效果，超標值低於所有資料值</a></li>
+    </ul>
+  </div>
 </body>
 </html>

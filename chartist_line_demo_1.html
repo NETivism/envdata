@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Chartist Line：基本範例</title>
+  <meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="vendor/chartist/chartist.min.css">
+  <style>
+    /* base style */
+    body {
+      font-size: 100%;
+      line-height: 1.7;
+    }
+    section { margin-bottom: 80px; }
+    #page {
+      margin: 0 auto;
+      padding: 20px 10px;
+      width: 1200px;
+    }
+    .page-title {
+      margin-bottom: 60px;
+    }
+  </style>
+  <style type="text/css">
+    /* threshold style */
+    .ct-line.ct-threshold-above, .ct-point.ct-threshold-above, .ct-bar.ct-threshold-above {
+      stroke: #f05b4f;
+    }
+    .ct-line.ct-threshold-below, .ct-point.ct-threshold-below, .ct-bar.ct-threshold-below {
+      stroke: #59922b;
+    }
+    .ct-area.ct-threshold-above {
+      fill: #f05b4f;
+    }
+    .ct-area.ct-threshold-below {
+      fill: #59922b;
+    }
+    .ct-series-a .ct-bar.ct-threshold-above {
+      stroke: #f05b4f;
+    }
+    .ct-series-a .ct-bar.ct-threshold-below {
+      stroke: #59922b;
+    }
+  </style>
+  <script type="text/javascript" src="vendor/papaparse/papaparse.min.js"></script>
+  <script type="text/javascript" src="vendor/chartist/chartist.min.js"></script>
+  <script type="text/javascript" src="vendor/chartist-plugin-threshold/chartist-plugin-threshold.min.js"></script>
+  <script type="text/javascript" src="vendor/chartist-plugin-axistitle/chartist-plugin-axistitle.min.js"></script>
+</head>
+<body>
+<div id="page">
+  <section>
+    <h3>基本範例</h3>
+    <div class="ct-chart"></div>
+    <script>
+    Papa.parse("http://netivism.github.io/envdata/data/sample.csv", {
+      download: true,
+      complete: function(results) {
+        var labels = [];
+        var values = [];
+        var i;
+        for(i = 0; i < results.data.length; i++){
+          var row = results.data[i];
+          if(row.length >= 4){
+            var d = row[3].split(' ');
+            labels.push(d[1].replace(':', ''));
+            values.push(row[4]);
+          }
+        }
+        var data = {
+          // A labels array that can contain any sort of values
+          "labels": labels,
+          // Our series array that contains series objects or in this case series data arrays
+          "series": [
+            values
+          ]
+        };
+
+        // Create a new line chart object where as first parameter we pass in a selector
+        // that is resolving to our chart container element. The Second parameter
+        // is the actual data object.
+        new Chartist.Line('.ct-chart', data);
+      }
+    });
+    </script>
+  </section>
+</div>
+</body>
+</html>
