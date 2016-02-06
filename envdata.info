@@ -1,0 +1,6 @@
+name = Envdata
+description = Environmental data helper
+package = Others
+core = 7.x
+dependencies[] = data
+version = "7.x-1.0-beta"

@@ -1,0 +1,7 @@
+<?php
+
+function envdata_cron(){
+  module_load_include('inc', 'envdata', 'envdata.airq');
+  envdata_airq_update_gov_file();
+  envdata_airq_create_geojson();
+}
