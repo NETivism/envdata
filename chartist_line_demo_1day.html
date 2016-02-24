@@ -54,7 +54,7 @@
 <div id="page">
   <section>
     <div id="charts">
-    
+
     </div>
     <script type="text/javascript">
 var item = {"211":{"item":"211","abbr":"OPC","desp":"[均值]不透光率","unit":"%"},"222":{"item":"222","abbr":"SOX","desp":"[均值]二氧化硫","unit":"ppm"},"223":{"item":"223","abbr":"NOX","desp":"[均值]氮氧化物","unit":"ppm"},"224":{"item":"224","abbr":"CO","desp":"[均值]一氧化碳","unit":"ppm"},"225":{"item":"225","abbr":"TRS","desp":"[均值]總還原硫","unit":"ppm"},"226":{"item":"226","abbr":"HCL","desp":"[均值]氯化氫","unit":"ppm"},"227":{"item":"227","abbr":"VOC","desp":"[均值]揮發性有機物","unit":"ppm"},"228":{"item":"228","abbr":"NMHC","desp":"[均值]NMHC","unit":"ppm"},"236":{"item":"236","abbr":"O2","desp":"[均值]氧氣","unit":"%"},"237":{"item":"237","abbr":"CO2","desp":"[均值]二氧化碳","unit":"%"},"248":{"item":"248","abbr":"FLOW","desp":"[均值]排放流率","unit":"Nm3/hr"},"259":{"item":"259","abbr":"TEMP","desp":"[均值]溫度","unit":"℃"},"280":{"item":"280","abbr":"CMH","desp":"[均值]排放流率","unit":"CMH"},"911":{"item":"911","abbr":"OPC","desp":"不透光率","unit":"%"},"922":{"item":"922","abbr":"SOX","desp":"二氧化硫","unit":"ppm"},"923":{"item":"923","abbr":"NOX","desp":"氮氧化物","unit":"ppm"},"924":{"item":"924","abbr":"CO","desp":"一氧化碳","unit":"ppm"},"925":{"item":"925","abbr":"TRS","desp":"總還原硫","unit":"ppm"},"926":{"item":"926","abbr":"HCL","desp":"氯化氫","unit":"ppm"},"927":{"item":"927","abbr":"VOC","desp":"揮發性有機物","unit":"ppm"},"928":{"item":"928","abbr":"NMHC","desp":"NMHC","unit":"ppm"},"936":{"item":"936","abbr":"O2","desp":"氧氣","unit":"%"},"937":{"item":"937","abbr":"CO2","desp":"二氧化碳","unit":"%"},"948":{"item":"948","abbr":"FLOW","desp":"排放流率","unit":"Nm3/hr"},"959":{"item":"959","abbr":"TEMP","desp":"溫度","unit":"℃"},"980":{"item":"980","abbr":"CMH","desp":"排放流率","unit":"CMH"}};
@@ -110,7 +110,7 @@ jQuery(document).ready(function(){
       ]
       */
     };
-    Papa.parse("data/factory1day.csv", {
+    Papa.parse("http://netivism.github.io/envdata/data/factory1day.csv", {
       download: true,
       complete: function(results) {
         var values = {};
@@ -135,13 +135,14 @@ jQuery(document).ready(function(){
           }
 
           values[index]['h'+datehour[1].toString()] = max;
-          indexo = index; 
+          indexo = index;
         }
 
         // crete chart
         var data, line, $div, $h3;
         var $root = $("#charts");
         var count = 0;
+
         for(index in values) {
           var name = index.split('_');
           /* TODO: missing hour problem
@@ -157,10 +158,23 @@ jQuery(document).ready(function(){
           };
           line = [];
 
-          for(v in values[index]) {
+          console.log(values[index]);
+          var keys = Object.keys(values[index]);
+          keys.reverse();
+          console.log(keys);
+          for (var i = 0; i < keys.length; i++) {
+            //console.log(keys[i]);
+            var v = keys[i];
             data.labels.push(v.replace('h', ''));
             line.push(values[index][v]);
           }
+          /*
+          for(v in values[index]) {
+            console.log(v);
+            data.labels.push(v.replace('h', ''));
+            line.push(values[index][v]);
+          }
+          */
           data["series"].push(line);
 
           $div = $('<div class="'+index+' ct-chart"></div>');
