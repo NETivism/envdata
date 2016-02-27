@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>Chartist Line：加上x/y軸單位與超標效果</title>
+  <title>Chartist Line：加上x/y軸單位與超標效果</title>
   <meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="vendor/chartist/chartist.min.css">
 
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
@@ -43,6 +43,9 @@
     }
     .ct-series-a .ct-bar.ct-threshold-below {
       stroke: #59922b;
+    }
+    .ct-series-b .ct-line {
+      stroke: #ffc107;
     }
   </style>
   <script type="text/javascript" src="vendor/papaparse/papaparse.min.js"></script>
@@ -96,11 +99,18 @@ jQuery(document).ready(function(){
       }
     };
     var chartOption = {
-      showArea: true,
       axisY: {
         onlyInteger: true
       },
       lineSmooth: false,
+      series: {
+        'data-line': {
+          showArea: true
+        },
+        'threshold-line': {
+          showPoint: false
+        }
+      },
       /*
       plugins: [
         Chartist.plugins.ctThreshold({
@@ -152,21 +162,57 @@ jQuery(document).ready(function(){
           }
           break;
           */
+          var dataVals = [];
+          var thresholdVals = [];
+          var threshold = "30";
+
+          data = {
+            "labels": [],
+            "series": [{
+              name: 'data-line',
+              data: dataVals
+            }, {
+              name: 'threshold-line',
+              data: thresholdVals
+            }]
+          }
+
+          /*
           data = {
             "labels": [],
             "series": [],
           };
           line = [];
+          line[0] = {
+            name: 'data-line',
+            data: dataVals
+          };
+           line[1] = {
+            name: 'threshold-line',
+            data: thresholdVals
+          };
 
-          console.log(values[index]);
+          line = [{
+            name: 'data-line',
+            data: dataVals
+          }, {
+            name: 'threshold-line',
+            data: thresholdVals
+          }];
+          */
+
+          // console.log(values[index]);
           var keys = Object.keys(values[index]);
           keys.reverse();
-          console.log(keys);
           for (var i = 0; i < keys.length; i++) {
-            //console.log(keys[i]);
             var v = keys[i];
             data.labels.push(v.replace('h', ''));
-            line.push(values[index][v]);
+
+            // push data to data line
+            dataVals.push(values[index][v]);
+
+            // push data to threshold line
+            thresholdVals.push(threshold);
           }
           /*
           for(v in values[index]) {
@@ -175,7 +221,9 @@ jQuery(document).ready(function(){
             line.push(values[index][v]);
           }
           */
-          data["series"].push(line);
+
+          // data["series"].push(line);
+          // console.log(data);
 
           $div = $('<div class="'+index+' ct-chart"></div>');
           $h3 = $('<h3>'+name[1]+' - '+ item[name[2]]["desp"]+'</h3>')
