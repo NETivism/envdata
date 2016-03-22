@@ -26,6 +26,7 @@
   </style>
   <style type="text/css">
     /* threshold style */
+    /*
     .ct-line.ct-threshold-above, .ct-point.ct-threshold-above, .ct-bar.ct-threshold-above {
       stroke: #f05b4f;
     }
@@ -44,8 +45,18 @@
     .ct-series-a .ct-bar.ct-threshold-below {
       stroke: #59922b;
     }
+    */
+    .ct-series-a .ct-line {
+      stroke-width: 2px;
+    }
     .ct-series-b .ct-line {
-      stroke: #ffc107;
+      stroke: #2196F3;
+    }
+    .ct-series-b .ct-point, .ct-series-b .ct-slice-donut {
+      stroke: #1976D2;
+    }
+    .ct-series-b .ct-area, .ct-series-b .ct-slice-pie {
+      fill: #2196F3;
     }
   </style>
   <script type="text/javascript" src="vendor/papaparse/papaparse.min.js"></script>
@@ -120,11 +131,11 @@ jQuery(document).ready(function(){
       ]
       */
     };
-    Papa.parse("http://netivism.github.io/envdata/data/factory1day.csv", {
+    Papa.parse("http://netivism.github.io/envdata/data/factory1day_threshold.csv", {
       download: true,
       complete: function(results) {
         var values = {};
-        var i, indexo, row, index, datehour, max, avg;
+        var i, indexo, row, index, datehour, max, avg, threshold;
 
         // grouping by registration_no,facility_no,type
         for(i = 0; i < results.data.length; i++){
@@ -134,7 +145,7 @@ jQuery(document).ready(function(){
           datehour = row[5].split('-');
           max = row[3];
           avg = row[4];
-
+          threshold = row[6];
           // new factory
           /*
           if(indexo != index){
@@ -144,7 +155,7 @@ jQuery(document).ready(function(){
             values[index] = [];
           }
 
-          values[index]['h'+datehour[1].toString()] = max;
+          values[index]['h'+datehour[1].toString()] = max + '#' + threshold;
           indexo = index;
         }
 
@@ -164,7 +175,6 @@ jQuery(document).ready(function(){
           */
           var dataVals = [];
           var thresholdVals = [];
-          var threshold = "60";
 
           data = {
             "labels": [],
@@ -202,14 +212,18 @@ jQuery(document).ready(function(){
           var keys = Object.keys(values[index]);
           keys.reverse();
           for (var i = 0; i < keys.length; i++) {
-            var v = keys[i];
-            data.labels.push(v.replace('h', ''));
+            var k = keys[i];
+            data.labels.push(k.replace('h', ''));
+
+            var v = values[index][k];
+            v = v.split('#');
 
             // push data to data line
-            dataVals.push(values[index][v]);
+            dataVals.push(v[0]);
 
             // push data to threshold line
-            thresholdVals.push(threshold);
+            v[1] = v[1] == 0 ? '' : v[1];
+            thresholdVals.push(v[1]);
           }
           /*
           for(v in values[index]) {
