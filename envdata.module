@@ -47,162 +47,27 @@ function envdata_block_view($delta = '') {
 
 function _envdata_facility_realtime_charts_content() {
   global $base_url;
-
-  $arg             = arg();
-  $output          = '';
-  $registration_no = $arg[0] == 'facility' && isset($arg[1]) && !isset($arg[2]) ? $arg[1] : '';
-  $csv_url         = $registration_no ? $base_url . '/realtime/chimney_cache/1day/' . $registration_no . '.csv' : '';
-  $csv_file_path   = $csv_url ? $_SERVER['DOCUMENT_ROOT'] . '/realtime/chimney_cache/1day/' . $registration_no . '.csv' : '';
-  $csv_exists      = file_exists($csv_file_path) ? TRUE : FALSE;
+  $arg              = arg();
+  $output           = '';
+  $registration_no  = $arg[0] == 'facility' && isset($arg[1]) && !isset($arg[2]) ? $arg[1] : '';
+  $data_url         = $registration_no ? $base_url . '/realtime/chimney_cache/1day/' . $registration_no . '.csv' : '';
+  $csv_file_path    = $data_url ? $_SERVER['DOCUMENT_ROOT'] . '/realtime/chimney_cache/1day/' . $registration_no . '.csv' : '';
+  $csv_exists       = file_exists($csv_file_path) ? TRUE : FALSE;
+  $envdata_settings = array();
+  $module_envdata   = drupal_get_path('module', 'envdata');
 
   // If csv url and file exist, init chartist
-  if ($csv_url && $csv_exists) {
-
+  if ($data_url && $csv_exists) {
     $output .= '<div id="charts"></div>';
-    $js = '
-var item = {"211":{"item":"211","abbr":"OPC","desp":"[均值]不透光率","unit":"%"},"222":{"item":"222","abbr":"SOX","desp":"[均值]二氧化硫","unit":"ppm"},"223":{"item":"223","abbr":"NOX","desp":"[均值]氮氧化物","unit":"ppm"},"224":{"item":"224","abbr":"CO","desp":"[均值]一氧化碳","unit":"ppm"},"225":{"item":"225","abbr":"TRS","desp":"[均值]總還原硫","unit":"ppm"},"226":{"item":"226","abbr":"HCL","desp":"[均值]氯化氫","unit":"ppm"},"227":{"item":"227","abbr":"VOC","desp":"[均值]揮發性有機物","unit":"ppm"},"228":{"item":"228","abbr":"NMHC","desp":"[均值]NMHC","unit":"ppm"},"236":{"item":"236","abbr":"O2","desp":"[均值]氧氣","unit":"%"},"237":{"item":"237","abbr":"CO2","desp":"[均值]二氧化碳","unit":"%"},"248":{"item":"248","abbr":"FLOW","desp":"[均值]排放流率","unit":"Nm3/hr"},"259":{"item":"259","abbr":"TEMP","desp":"[均值]溫度","unit":"℃"},"280":{"item":"280","abbr":"CMH","desp":"[均值]排放流率","unit":"CMH"},"911":{"item":"911","abbr":"OPC","desp":"不透光率","unit":"%"},"922":{"item":"922","abbr":"SOX","desp":"二氧化硫","unit":"ppm"},"923":{"item":"923","abbr":"NOX","desp":"氮氧化物","unit":"ppm"},"924":{"item":"924","abbr":"CO","desp":"一氧化碳","unit":"ppm"},"925":{"item":"925","abbr":"TRS","desp":"總還原硫","unit":"ppm"},"926":{"item":"926","abbr":"HCL","desp":"氯化氫","unit":"ppm"},"927":{"item":"927","abbr":"VOC","desp":"揮發性有機物","unit":"ppm"},"928":{"item":"928","abbr":"NMHC","desp":"NMHC","unit":"ppm"},"936":{"item":"936","abbr":"O2","desp":"氧氣","unit":"%"},"937":{"item":"937","abbr":"CO2","desp":"二氧化碳","unit":"%"},"948":{"item":"948","abbr":"FLOW","desp":"排放流率","unit":"Nm3/hr"},"959":{"item":"959","abbr":"TEMP","desp":"溫度","unit":"℃"},"980":{"item":"980","abbr":"CMH","desp":"排放流率","unit":"CMH"}};
 
-(function($) {
-  $(document).ready(function() {
-     function missingHours(obj){
-      var hours = [], object = {}, h, hour, datehour;
-      for(var i = 0; i < 24; i++){
-        h = i < 10 ? "0" + i.toString() : i.toString();
-        hours[h] = 0;
-      }
-
-      for(h in obj){
-        datehour = h.split("-");
-        hours[datehour[1]] = 1;
-        object[datehour[1]] = obj[h];
-      }
-      return obj;
-    }
-    var axisTitleOption = {
-      axisX: {
-        axisTitle: "",
-        axisClass: "ct-axis-title",
-        offset: {
-          x: 0,
-          y: 0
-        },
-        textAnchor: "end",
-      },
-      axisY: {
-        axisTitle: "",
-        axisClass: "ct-axis-title",
-        offset: {
-          x: 0,
-          y: -5
-        },
-        textAnchor: "end",
-        flipTitle: false
-      }
-    };
-    var chartOption = {
-      showArea: true,
-      axisY: {
-        onlyInteger: true
-      },
-      lineSmooth: false,
-      /*
-      plugins: [
-        Chartist.plugins.ctThreshold({
-          threshold: 40
-        }),
-        Chartist.plugins.ctAxisTitle(axisTitleOption)
-      ]
-      */
-    };
-    Papa.parse("' . $csv_url . '", {
-      download: true,
-      complete: function(results) {
-        var values = {};
-        var i, indexo, row, index, datehour, max, avg;
-
-        // grouping by registration_no,facility_no,type
-        for(i = 0; i < results.data.length; i++){
-          row = results.data[i];
-          if(row.length < 5) continue;
-          index = row[0]+"_"+row[1]+"_"+row[2];
-          datehour = row[5].split("-");
-          max = row[3];
-          avg = row[4];
-
-          // new factory
-          /*
-          if(indexo != index){
-          }
-          */
-          if(typeof values[index] === "undefined"){
-            values[index] = [];
-          }
-
-          values[index]["h"+datehour[1].toString()] = max;
-          indexo = index;
-        }
-
-        // crete chart
-        var data, line, $div, $h3, $h4, chimneyName;
-        var $root = $("#charts");
-        var count = 0;
-        for(index in values) {
-          var name = index.split("_");
-          /* TODO: missing hour problem
-          indexues[index] = missingHours(values[index]);
-          for(label in values[index]) {
-            console.log(label + ":" +values[index][label]);
-          }
-          break;
-          */
-          data = {
-            "labels": [],
-            "series": [],
-          };
-          line = [];
-
-          for(v in values[index]) {
-            data.labels.push(v.replace("h", ""));
-            line.push(values[index][v]);
-          }
-          data["series"].push(line);
-          if(name[1] != chimneyName){
-            $h3 = $("<h3>"+name[1]+"</h3>");
-            $root.append($h3);
-          }
-          chimneyName = name[1];
-          
-          $h4 = $("<h4>" + item[name[2]][\'desp\'] + "</h4>");
-          $root.append($h4);
-
-          $div = $("<div class=\'"+index+" ct-chart\'></div>");
-          $root.append($div);
-
-          // Create a new line chart object where as first parameter we pass in a selector
-          // that is resolving to our chart container element. The Second parameter
-          // is the actual data object.
-          axisTitleOption.axisY.axisTitle = item[name[2]]["unit"];
-          chartOption.plugins = [
-            //Chartist.plugins.ctThreshold({threshold: 40}),
-            Chartist.plugins.ctAxisTitle(axisTitleOption)
-          ];
-          new Chartist.Line("."+index, data, chartOption);
-          count++;
-          // if(count > 2) break;
-        }
-      }
-    });
-  });
-})(jQuery);
-';
-
-    drupal_add_js($js, array('type' => 'inline', 'scope' => 'footer'));
-
-    $envdata_settings = array(
-      'chartist_load' => true
-     );
-
-    drupal_add_js(array('envdata' => $envdata_settings), 'setting');
+    $envdata_settings['dataURL'] = $data_url;
+    drupal_add_css($module_envdata . '/css/envdata-facility-charts.css');
+    drupal_add_js(array('envdata' => $envdata_settings), 'setting');    
+    drupal_add_js($module_envdata . '/js/envdata-facility-charts.js');
+    
+    // Set chartist_load is 'TRUE' after init envdata-facility-charts.js
+    $envdata_settings['chartist_load'] = TRUE;
+    drupal_add_js(array('envdata' => $envdata_settings), 'setting');    
   }
 
   return $output;

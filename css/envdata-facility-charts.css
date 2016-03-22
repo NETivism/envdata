@@ -1,0 +1,12 @@
+.ct-series-a .ct-line {
+  stroke-width: 2px;
+}
+.ct-series-b .ct-line {
+  stroke: #2196F3;
+}
+.ct-series-b .ct-point, .ct-series-b .ct-slice-donut {
+  stroke: #1976D2;
+}
+.ct-series-b .ct-area, .ct-series-b .ct-slice-pie {
+  fill: #2196F3;
+}
