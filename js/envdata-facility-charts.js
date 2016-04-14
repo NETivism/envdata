@@ -306,8 +306,9 @@
             }];
             */
 
-            // console.log(values[index]);
+            console.log(values[index]);
             var keys = Object.keys(values[index]);
+            var topValue;
             keys.reverse();
             for (var i = 0; i < keys.length; i++) {
               var k = keys[i];
@@ -322,6 +323,24 @@
               // push data to threshold line
               v[1] = v[1] == 0 ? "" : v[1];
               thresholdVals.push(v[1]);
+
+              // If threshold value more than max data 
+              v[0] = parseInt(v[0]);
+              v[1] = parseInt(v[1]);
+              topValue = topValue === undefined ? topValue = v[0] : topValue < v[0] ? topValue = v[0] : topValue = topValue;
+              
+              if (i == keys.length - 1) {
+                console.log("topValue: " + topValue);
+
+                if (v[1] && v[1] >= topValue) {
+                  console.log("threshold: " + v[1]);
+                  v[1] += 10;
+                  console.log("high: " + v[1]);
+                  chartOption.high = v[1];
+                }
+
+                topValue = undefined;
+              }
             }
             /*
             for(v in values[index]) {
