@@ -61,13 +61,10 @@ function _envdata_facility_realtime_charts_content() {
     $output .= '<div id="charts"></div>';
 
     $envdata_settings['dataURL'] = $data_url;
+    $envdata_settings['chartist_load'] = FALSE;
     drupal_add_css($module_envdata . '/css/envdata-facility-charts.css');
     drupal_add_js(array('envdata' => $envdata_settings), 'setting');    
     drupal_add_js($module_envdata . '/js/envdata-facility-charts.js');
-    
-    // Set chartist_load is 'TRUE' after init envdata-facility-charts.js
-    $envdata_settings['chartist_load'] = TRUE;
-    drupal_add_js(array('envdata' => $envdata_settings), 'setting');    
   }
 
   return $output;

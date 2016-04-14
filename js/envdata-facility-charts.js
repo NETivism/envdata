@@ -5,9 +5,8 @@
   Drupal.behaviors.envdata = {
     attach: function (context, settings) {
 
-      console.log("222222555");
-      var dataURL = Drupal.settings.envdata.dataURL;
-      console.log(dataURL);
+      var dataURL = Drupal.settings.envdata.dataURL;      
+      // console.log(dataURL);
 
       var item = {
         "211": {
@@ -306,7 +305,7 @@
             }];
             */
 
-            console.log(values[index]);
+            // console.log(values[index]);
             var keys = Object.keys(values[index]);
             var topValue;
             keys.reverse();
@@ -330,12 +329,12 @@
               topValue = topValue === undefined ? topValue = v[0] : topValue < v[0] ? topValue = v[0] : topValue = topValue;
               
               if (i == keys.length - 1) {
-                console.log("topValue: " + topValue);
+                // console.log("topValue: " + topValue);
 
                 if (v[1] && v[1] >= topValue) {
-                  console.log("threshold: " + v[1]);
+                  // console.log("threshold: " + v[1]);
                   v[1] += 10;
-                  console.log("high: " + v[1]);
+                  // console.log("high: " + v[1]);
                   chartOption.high = v[1];
                 }
 
@@ -370,6 +369,9 @@
             count++;
             // if(count > 2) break;
           }
+
+          // Set chartist_load is true after gerenate all charts.
+          Drupal.settings.envdata.chartist_load = true;
         }
       });
     },
