@@ -168,18 +168,31 @@
       };
 
       var missingHours = function(obj) {
-        var hours = [], object = {}, h, hour, datehour;
-        for (var i = 0; i < 24; i++) {
-          h = i < 10 ? "0" + i.toString() : i.toString();
-          hours[h] = 0;
-        }
+        var robj = {}, timestamp;
+        for(var key in obj){
+          var o = obj[key];
+          var datestr = key.replace('-', '');
+          var dtmp = datestr.match(/.{1,2}/g) || [];
+          var date = new Date(dtmp[0]+dtmp[1], dtmp[2], dtmp[3], dtmp[4]);
 
-        for (h in obj) {
-          datehour = h.split("-");
-          hours[datehour[1]] = 1;
-          object[datehour[1]] = obj[h];
+          var timediff = date.getTime() - timestamp;
+          if(timediff > 3600000){
+            for(var i = 1; i < timediff/3600000; i++){
+              var dd = new Date(timestamp + 3600000*i);
+              var hour = dd.getHours();
+              if(hour.length < 2) {
+                hour = '0' + datestr;
+              }
+              var threshold = o[1] || 0;
+              robj[hour] = [0, threshold];
+            }
+          }
+
+          // for next loop
+          timestamp = date.getTime();
+          robj[dtmp[4]] = o;
         }
-        return obj;
+        return robj;
       }
 
       var axisTitleOption = {
@@ -207,6 +220,7 @@
 
       var chartOption = {
         axisY: {
+          type: Chartist.AutoScaleAxis,
           onlyInteger: true
         },
         lineSmooth: false,
@@ -239,20 +253,14 @@
             row = results.data[i];
             if(row.length < 5) continue;
             index = row[0] + "_" + row[1] + "_" + row[2];
-            datehour = row[5].split("-");
             max = row[3];
             avg = row[4];
-            threshold = row[6];
+            threshold = row[6] || 0;
             // new factory
-            /*
-            if(indexo != index){
-            }
-            */
             if(typeof values[index] === "undefined"){
               values[index] = [];
             }
-
-            values[index]["h" + datehour[1].toString()] = max + "#" + threshold;
+            values[index][row[5]] = [max, threshold];
             indexo = index;
           }
 
@@ -263,13 +271,7 @@
 
           for(index in values) {
             var name = index.split("_");
-            /* TODO: missing hour problem
-            indexues[index] = missingHours(values[index]);
-            for(label in values[index]) {
-              console.log(label + ":" +values[index][label]);
-            }
-            break;
-            */
+            values[index] = missingHours(values[index]);
             var dataVals = [];
             var thresholdVals = [];
 
@@ -281,40 +283,13 @@
               ]
             }
 
-            /*
-            data = {
-              "labels": [],
-              "series": [],
-            };
-            line = [];
-            line[0] = {
-              name: 'data-line',
-              data: dataVals
-            };
-             line[1] = {
-              name: 'threshold-line',
-              data: thresholdVals
-            };
-
-            line = [{
-              name: 'data-line',
-              data: dataVals
-            }, {
-              name: 'threshold-line',
-              data: thresholdVals
-            }];
-            */
-
-            // console.log(values[index]);
             var keys = Object.keys(values[index]);
             var topValue;
-            keys.reverse();
             for (var i = 0; i < keys.length; i++) {
               var k = keys[i];
-              data.labels.push(k.replace("h", ""));
+              data.labels.push(k);
 
               var v = values[index][k];
-              v = v.split("#");
 
               // push data to data line
               dataVals.push(v[0]);
@@ -341,13 +316,6 @@
                 topValue = undefined;
               }
             }
-            /*
-            for(v in values[index]) {
-              console.log(v);
-              data.labels.push(v.replace('h', ''));
-              line.push(values[index][v]);
-            }
-            */
 
             // data["series"].push(line);
             // console.log(data);
