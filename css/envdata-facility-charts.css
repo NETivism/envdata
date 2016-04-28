@@ -1,3 +1,4 @@
+/* chart */
 .ct-series-a .ct-line {
   stroke-width: 2px;
 }
@@ -9,4 +10,10 @@
 }
 .ct-series-b .ct-area, .ct-series-b .ct-slice-pie {
   fill: #2196F3;
+}
+
+/* chart share modal */
+#chart-share-modal {
+  width: 50%;
+  max-width: 600px;
 }

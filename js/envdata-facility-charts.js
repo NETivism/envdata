@@ -242,6 +242,71 @@
         */
       };
 
+      var svgToPng = function(container) {
+        var container = document.getElementById(container);
+        var svg = container.querySelector("svg");
+        
+        //console.log(svg);
+        
+        if (typeof window.XMLSerializer != "undefined") {
+          var svgData = (new XMLSerializer()).serializeToString(svg);
+        }
+
+        if (typeof svg.xml != "undefined") {
+          var svgData = svg.xml;
+        }
+
+        // console.log(svg);
+        // console.log(svgData);
+
+        var canvas = document.createElement("canvas");
+        var svgSize = svg.getBoundingClientRect();
+      
+        canvas.width = svgSize.width;
+        canvas.height = svgSize.height;
+
+        var ctx = canvas.getContext("2d");
+
+        // console.log(canvas);
+
+        var img = document.createElement("img");
+        img.setAttribute("src", "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgData))) );
+
+        ctx.drawImage(img, 0, 0);
+        var pngData = canvas.toDataURL("image/png");
+        
+        return pngData;
+
+        /*
+        img.onload = function() {
+          console.log('img onload !!');
+          ctx.drawImage(img, 0, 0);
+          var pngData = canvas.toDataURL("image/png");
+          
+          if (pngData) {
+            return pngData;
+          }
+          
+          // var newimg = document.createElement("img");
+          // newimg.setAttribute("src", imgsrc);
+          //document.body.appendChild(newimg);
+        };
+        */
+      }
+
+      var fbDialog = function(settings) { 
+        FB.ui(settings,
+          function(response) {
+            if (response && response.post_id) {
+              console.log("分享成功！");
+            } 
+            else {
+              console.log("分享失敗...");
+            }
+          }
+        );
+      }
+
       Papa.parse(dataURL, {
         download: true,
         complete: function(results) {
@@ -320,10 +385,14 @@
             // data["series"].push(line);
             // console.log(data);
 
-            $div = $("<div class='" + index + " ct-chart'></div>");
-            $h3 = $("<h3>" + name[1] + " - " + item[name[2]]["desp"] + "</h3>");
-            $root.append($h3);
-            $root.append($div);
+            var chartID = "chart-" + index;
+            var chartName = name[1] + " - " + item[name[2]]["desp"];
+            var chartItem = "<div class='chart'>";
+            chartItem += "<h3>" + chartName + "</h3>";
+            chartItem += "<div class='chart-btns'><a class='chart-share-btn' href='#'>分享</a></div>";
+            chartItem += "<div id='" + chartID + "' class='" + index + " ct-chart' data-chart-name='" + chartName  + "'></div>";
+            chartItem += "</div>";
+            $root.append(chartItem);
 
             // Create a new line chart object where as first parameter we pass in a selector
             // that is resolving to our chart container element. The Second parameter
@@ -340,8 +409,75 @@
 
           // Set chartist_load is true after gerenate all charts.
           Drupal.settings.envdata.chartist_load = true;
+
+          // Show a share preview modal when user click chart share button.
+          $(".chart-btns").on("click", ".chart-share-btn", function(e) {
+            e.preventDefault();
+
+            var $chart       = $(this).parent(".chart-btns").next(".ct-chart");
+            var chartID      = $chart.attr("id");
+            var chartName    = $chart.attr("data-chart-name");
+            var pngDataVal   = svgToPng(chartID);
+            var fileNameVal  = chartID;
+            var facilityName = $(".views-field-facility-name .field-content").text();
+            
+            var postData = {
+              imgData: pngDataVal,
+              fileName: fileNameVal,
+            };
+
+            $.ajax({
+              type: "POST",
+              url: "/ajax/save-chart",
+              data: postData,
+              success: function(chartImgURL) {
+                console.log("成功將圖表圖片儲存於server後（ajax success），印出圖片網址： " + chartImgURL);
+
+                // Prepare share modal HTML.
+                var shareModal = "<div class='modal' id='chart-share-modal'><h3>[即時排放監測] " + facilityName + "</h3><h4>" + chartName + "</h4><div class='chart-img'><img src='" + chartImgURL + "' /></div><div class='share-btns'><a href='#' class='fb-share-btn'>立刻分享到Facebook</a></div></div>";
+                $("body").append(shareModal);
+                
+                // Open share modal automatically
+                $shareModal = $("#chart-share-modal");
+                $shareModal.modal();
+
+                // Remove share modal after modal closed
+                $('#chart-share-modal').on($.modal.AFTER_CLOSE, function(event, modal) {
+                  $shareModal.remove();
+                });
+                
+                // Popup a facebook share dialog when user click facebook share button in share modal. 
+                $("#chart-share-modal").on("click", ".fb-share-btn", function(e) {
+                  e.preventDefault();
+                  
+                  console.log("在送出分享設定參數之前，印出分享圖片網址： " + chartImgURL);
+
+                  var dMethod  = "feed";
+                  var dName    = "[即時排放監測] " + facilityName;
+                  var dLink    = window.location.href;
+                  var dPic     = chartImgURL;
+                  var dDesc    = chartName;
+                  var dCaption = "透明足跡 thaubing.gcaa.org.tw";
+
+                  var dSettings = {
+                    method: dMethod,
+                    name: dName,
+                    link: dLink,
+                    picture: dPic,
+                    description: dDesc,
+                    caption: dCaption
+                  };
+
+                  // Send facebook share dialog settings to fbDialog function
+                  fbDialog(dSettings);
+                });
+                
+              }
+            });
+          });
         }
       });
+
     },
     
     detach: function (context, settings, trigger) {

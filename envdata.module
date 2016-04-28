@@ -16,12 +16,30 @@ function envdata_init() {
   $module_envdata = drupal_get_path('module', 'envdata');
 
   if ($arg[0] == 'facility' && isset($arg[1])) {
+    // chartist
     drupal_add_css($module_envdata . '/vendor/chartist/chartist.min.css');
-    drupal_add_js($module_envdata . '/vendor/papaparse/papaparse.min.js');
     drupal_add_js($module_envdata . '/vendor/chartist/chartist.min.js');
     drupal_add_js($module_envdata . '/vendor/chartist-plugin-threshold/chartist-plugin-threshold.js');
     drupal_add_js($module_envdata . '/vendor/chartist-plugin-axistitle/chartist-plugin-axistitle.min.js');
+    
+    // papaparse
+    drupal_add_js($module_envdata . '/vendor/papaparse/papaparse.min.js');
+
+    // jquery-modal
+    drupal_add_css($module_envdata . '/vendor/jquery-modal/jquery.modal.css');
+    drupal_add_js($module_envdata . '/vendor/jquery-modal/jquery.modal.min.js');
   }
+}
+
+function envdata_menu() {
+  $items['ajax/save-chart'] = array(
+    'title' => 'Save chart as image file to server',
+    'page callback' => 'envdata_save_chart',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  );
+
+  return $items;
 }
 
 function envdata_block_info() {
@@ -64,8 +82,41 @@ function _envdata_facility_realtime_charts_content() {
     $envdata_settings['chartist_load'] = FALSE;
     drupal_add_css($module_envdata . '/css/envdata-facility-charts.css');
     drupal_add_js(array('envdata' => $envdata_settings), 'setting');    
+    drupal_add_js($module_envdata . '/js/fbjs-init.js');
     drupal_add_js($module_envdata . '/js/envdata-facility-charts.js');
   }
 
   return $output;
+}
+
+function envdata_save_chart() {
+  global $base_url;
+  $file_public_path = variable_get('file_public_path', conf_path() . '/files');
+
+  if (isset($_POST['imgData']) && isset($_POST['fileName'])) {
+    $img_data           = $_POST['imgData'];
+
+    // Remove the headers (data:,) part.
+    // A real application should use them according to needs such as to check image type
+    $img_filtered_data  = substr($img_data, strpos($img_data, ',')+1);
+
+    // Need to decode before saving since the data we received is already base64 encoded
+    $img_unencoded_data = base64_decode($img_filtered_data);
+
+    $scheme     = 'public';
+    $dir        = "screenshot/charts/facility";
+    $scheme_dir = $scheme . '://' . $dir;
+
+    file_prepare_directory($scheme_dir, FILE_CREATE_DIRECTORY);
+  
+    $file_name  = drupal_hash_base64($_POST['fileName']) . '.png';
+    $file_uri   = $scheme_dir . '/' . $file_name;
+    
+    file_unmanaged_save_data($img_unencoded_data, $file_uri, FILE_EXISTS_REPLACE);
+
+    $img_url = $base_url . '/' . $file_public_path . '/' . $dir . '/' . $file_name;
+
+    drupal_json_output($img_url);
+    drupal_exit();
+  }
 }
