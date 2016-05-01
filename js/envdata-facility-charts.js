@@ -4,10 +4,9 @@
 
   Drupal.behaviors.envdata = {
     attach: function (context, settings) {
-
-      var dataURL = Drupal.settings.envdata.dataURL;      
-      // console.log(dataURL);
-
+      
+      var url = Drupal.settings.envdata.dataURL;      
+      var types = Drupal.settings.envdata.types;
       var item = {
         "211": {
           "item": "211",
@@ -307,17 +306,28 @@
         );
       }
 
-      Papa.parse(dataURL, {
-        download: true,
-        complete: function(results) {
-          var values = {};
-          var i, indexo, row, index, datehour, max, avg, threshold;
+      var renderChart = function(results, type){
+        var values = {};
+        var i, indexo, row, index, datehour, max, avg, threshold;
+        var filter = Drupal.settings.envdata.filter;
 
-          // grouping by registration_no,facility_no,type
-          for(i = 0; i < results.data.length; i++){
-            row = results.data[i];
-            if(row.length < 5) continue;
-            index = row[0] + "_" + row[1] + "_" + row[2];
+        // grouping by registration_no,facility_no,type
+        for(i = 0; i < results.data.length; i++){
+          row = results.data[i];
+          if(row.length < 5) continue;
+          index = type+'_'+row[0] + "_" + row[1] + "_" + row[2];
+
+          // apply filter parameter from drupal setting
+          var include = 1;
+          if(filter){
+            var regex = new RegExp(filter); 
+            if(!regex.test(index)){
+              include = 0;
+            }
+          }
+
+          if(include) {
+            index = 'T'+index;
             max = row[3];
             avg = row[4];
             threshold = row[6] || 0;
@@ -328,156 +338,177 @@
             values[index][row[5]] = [max, threshold];
             indexo = index;
           }
+        }
 
-          // crete chart
-          var data, line, $div, $h3;
-          var $root = $("#charts");
-          var count = 0;
+        // crete chart
+        var data, line, $div, $h3;
+        var $root = $("#charts");
+        var count = 0;
 
-          for(index in values) {
-            var name = index.split("_");
+        for(index in values) {
+          var name = index.split("_");
+          if(type == '1day') {
             values[index] = missingHours(values[index]);
-            var dataVals = [];
-            var thresholdVals = [];
+          }
+          var dataVals = [];
+          var thresholdVals = [];
 
-            data = {
-              "labels": [],
-              "series": [
-                { name: "threshold-line", data: thresholdVals },
-                { name: "data-line", data: dataVals }
-              ]
-            }
-
-            var keys = Object.keys(values[index]);
-            var topValue;
-            for (var i = 0; i < keys.length; i++) {
-              var k = keys[i];
-              data.labels.push(k);
-
-              var v = values[index][k];
-
-              // push data to data line
-              dataVals.push(v[0]);
-
-              // push data to threshold line
-              v[1] = v[1] == 0 ? "" : v[1];
-              thresholdVals.push(v[1]);
-
-              // If threshold value more than max data 
-              v[0] = parseInt(v[0]);
-              v[1] = parseInt(v[1]);
-              topValue = topValue === undefined ? topValue = v[0] : topValue < v[0] ? topValue = v[0] : topValue = topValue;
-              
-              if (i == keys.length - 1) {
-                // console.log("topValue: " + topValue);
-
-                if (v[1] && v[1] >= topValue) {
-                  // console.log("threshold: " + v[1]);
-                  v[1] += 10;
-                  // console.log("high: " + v[1]);
-                  chartOption.high = v[1];
-                }
-
-                topValue = undefined;
-              }
-            }
-
-            // data["series"].push(line);
-            // console.log(data);
-
-            var chartID = "chart-" + index;
-            var chartName = name[1] + " - " + item[name[2]]["desp"];
-            var chartItem = "<div class='chart'>";
-            chartItem += "<h3>" + chartName + "</h3>";
-            chartItem += "<div class='chart-btns'><a class='chart-share-btn' href='#'>分享</a></div>";
-            chartItem += "<div id='" + chartID + "' class='" + index + " ct-chart' data-chart-name='" + chartName  + "'></div>";
-            chartItem += "</div>";
-            $root.append(chartItem);
-
-            // Create a new line chart object where as first parameter we pass in a selector
-            // that is resolving to our chart container element. The Second parameter
-            // is the actual data object.
-            axisTitleOption.axisY.axisTitle = item[name[2]]["unit"];
-            chartOption.plugins = [
-              //Chartist.plugins.ctThreshold({threshold: 40}),
-              Chartist.plugins.ctAxisTitle(axisTitleOption)
-            ];
-            new Chartist.Line("." + index, data, chartOption);
-            count++;
-            // if(count > 2) break;
+          data = {
+            "labels": [],
+            "series": [
+              { name: "threshold-line", data: thresholdVals },
+              { name: "data-line", data: dataVals }
+            ]
           }
 
-          // Set chartist_load is true after gerenate all charts.
-          Drupal.settings.envdata.chartist_load = true;
+          var keys = Object.keys(values[index]);
+          var topValue;
+          for (var i = 0; i < keys.length; i++) {
+            var k = keys[i];
+            data.labels.push(k);
 
-          // Show a share preview modal when user click chart share button.
-          $(".chart-btns").on("click", ".chart-share-btn", function(e) {
-            e.preventDefault();
+            var v = values[index][k];
 
-            var $chart       = $(this).parent(".chart-btns").next(".ct-chart");
-            var chartID      = $chart.attr("id");
-            var chartName    = $chart.attr("data-chart-name");
-            var pngDataVal   = svgToPng(chartID);
-            var fileNameVal  = chartID;
-            var facilityName = $(".views-field-facility-name .field-content").text();
+            // push data to data line
+            dataVals.push(v[0]);
+
+            // push data to threshold line
+            v[1] = v[1] == 0 ? "" : v[1];
+            thresholdVals.push(v[1]);
+
+            // If threshold value more than max data 
+            v[0] = parseInt(v[0]);
+            v[1] = parseInt(v[1]);
+            topValue = topValue === undefined ? topValue = v[0] : topValue < v[0] ? topValue = v[0] : topValue = topValue;
             
-            var postData = {
-              imgData: pngDataVal,
-              fileName: fileNameVal,
-            };
+            if (i == keys.length - 1) {
+              // console.log("topValue: " + topValue);
 
-            $.ajax({
-              type: "POST",
-              url: "/ajax/save-chart",
-              data: postData,
-              success: function(chartImgURL) {
-                console.log("成功將圖表圖片儲存於server後（ajax success），印出圖片網址： " + chartImgURL);
-
-                // Prepare share modal HTML.
-                var shareModal = "<div class='modal' id='chart-share-modal'><h3>[即時排放監測] " + facilityName + "</h3><h4>" + chartName + "</h4><div class='chart-img'><img src='" + chartImgURL + "' /></div><div class='share-btns'><a href='#' class='fb-share-btn'>立刻分享到Facebook</a></div></div>";
-                $("body").append(shareModal);
-                
-                // Open share modal automatically
-                $shareModal = $("#chart-share-modal");
-                $shareModal.modal();
-
-                // Remove share modal after modal closed
-                $('#chart-share-modal').on($.modal.AFTER_CLOSE, function(event, modal) {
-                  $shareModal.remove();
-                });
-                
-                // Popup a facebook share dialog when user click facebook share button in share modal. 
-                $("#chart-share-modal").on("click", ".fb-share-btn", function(e) {
-                  e.preventDefault();
-                  
-                  console.log("在送出分享設定參數之前，印出分享圖片網址： " + chartImgURL);
-
-                  var dMethod  = "feed";
-                  var dName    = "[即時排放監測] " + facilityName;
-                  var dLink    = window.location.href;
-                  var dPic     = chartImgURL;
-                  var dDesc    = chartName;
-                  var dCaption = "透明足跡 thaubing.gcaa.org.tw";
-
-                  var dSettings = {
-                    method: dMethod,
-                    name: dName,
-                    link: dLink,
-                    picture: dPic,
-                    description: dDesc,
-                    caption: dCaption
-                  };
-
-                  // Send facebook share dialog settings to fbDialog function
-                  fbDialog(dSettings);
-                });
-                
+              if (v[1] && v[1] >= topValue) {
+                // console.log("threshold: " + v[1]);
+                v[1] += 10;
+                // console.log("high: " + v[1]);
+                chartOption.high = v[1];
               }
-            });
-          });
-        }
-      });
 
+              topValue = undefined;
+            }
+          }
+
+          // data["series"].push(line);
+          // console.log(data);
+
+          var chartID = "chart-" + index;
+          var chartName = name[2] + " - " + item[name[3]]["desp"];
+          var chartItem = "<div class='chart'>";
+          chartItem += "<h3>" + chartName + "</h3>";
+          chartItem += "<div class='chart-btns'><a class='chart-share-btn' href='#'>分享</a></div>";
+          chartItem += "<div id='" + chartID + "' class='" + index + " ct-chart' data-chart-name='" + chartName  + "'></div>";
+          chartItem += "</div>";
+          $root.append(chartItem);
+
+          // Create a new line chart object where as first parameter we pass in a selector
+          // that is resolving to our chart container element. The Second parameter
+          // is the actual data object.
+          axisTitleOption.axisY.axisTitle = item[name[3]]["unit"];
+          chartOption.plugins = [
+            //Chartist.plugins.ctThreshold({threshold: 40}),
+            Chartist.plugins.ctAxisTitle(axisTitleOption)
+          ];
+          new Chartist.Line("." + index, data, chartOption);
+          count++;
+          // if(count > 2) break;
+        }
+
+        // Set chartist_load is true after gerenate all charts.
+        Drupal.settings.envdata.chartist_load = true;
+
+        // Show a share preview modal when user click chart share button.
+        $(".chart-btns").on("click", ".chart-share-btn", function(e) {
+          e.preventDefault();
+          var d = new Date(),
+            month = '' + (d.getMonth() + 1),
+            day = '' + d.getDate(),
+            year = d.getFullYear();
+          if (month.length < 2) month = '0' + month;
+          if (day.length < 2) day = '0' + day;
+          var ymd = [year, month, day].join('');
+
+          var $chart       = $(this).parent(".chart-btns").next(".ct-chart");
+          var chartID      = $chart.attr("id");
+          var chartName    = $chart.attr("data-chart-name");
+          var fileNameVal  = chartID.replace(/^chart-T/, '')+'_'+ymd;
+          var facilityName = $(".views-field-facility-name .field-content").text();
+          // var pngDataVal   = svgToPng(chartID);
+          
+          var postData = {
+          //  imgData: pngDataVal
+            imgURL: '/envdata/chart/svg/' + fileNameVal
+          };
+
+          var getURL = '/envdata/chart/image/' + fileNameVal;
+          $.ajax({
+            type: "POST",
+            url: getURL,
+            data: postData,
+            success: function(chartImgURL) {
+              console.log("成功將圖表圖片儲存於server後（ajax success），印出圖片網址： " + chartImgURL);
+
+              // Prepare share modal HTML.
+              var shareModal = "<div class='modal' id='chart-share-modal'><h3>[即時排放監測] " + facilityName + "</h3><h4>" + chartName + "</h4><div class='chart-img'><img src='" + chartImgURL + "' /></div><div class='share-btns'><a href='#' class='fb-share-btn'>立刻分享到Facebook</a></div></div>";
+              $("body").append(shareModal);
+              
+              // Open share modal automatically
+              $shareModal = $("#chart-share-modal");
+              $shareModal.modal();
+
+              // Remove share modal after modal closed
+              $('#chart-share-modal').on($.modal.AFTER_CLOSE, function(event, modal) {
+                $shareModal.remove();
+              });
+              
+              // Popup a facebook share dialog when user click facebook share button in share modal. 
+              $("#chart-share-modal").on("click", ".fb-share-btn", function(e) {
+                e.preventDefault();
+                
+                console.log("在送出分享設定參數之前，印出分享圖片網址： " + chartImgURL);
+
+                var dMethod  = "feed";
+                var dName    = "[即時排放監測] " + facilityName;
+                var dLink    = window.location.href;
+                var dPic     = chartImgURL;
+                var dDesc    = chartName;
+                var dCaption = "透明足跡 thaubing.gcaa.org.tw";
+
+                var dSettings = {
+                  method: dMethod,
+                  name: dName,
+                  link: dLink,
+                  picture: dPic,
+                  description: dDesc,
+                  caption: dCaption
+                };
+
+                // Send facebook share dialog settings to fbDialog function
+                fbDialog(dSettings);
+              });
+              
+            }
+          });
+        });
+      }
+
+      for(var key in types) {
+        var dataURL = url.replace('{type}', types[key]);
+        (function(url, type){
+          Papa.parse(url, {
+            download: true,
+            complete: function(results){
+              renderChart(results, type);
+            } 
+          });
+        })(dataURL, types[key]);
+      }
     },
     
     detach: function (context, settings, trigger) {

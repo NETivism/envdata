@@ -9,34 +9,22 @@ function envdata_cron(){
   envdata_airq_create_geojson();
 }
 
-function envdata_init() {
-  $arg = arg();
-  $current_path       = current_path();
-  $current_path_alias = drupal_lookup_path('alias', $current_path);
-  $module_envdata = drupal_get_path('module', 'envdata');
-
-  if ($arg[0] == 'facility' && isset($arg[1])) {
-    // chartist
-    drupal_add_css($module_envdata . '/vendor/chartist/chartist.min.css');
-    drupal_add_js($module_envdata . '/vendor/chartist/chartist.min.js');
-    drupal_add_js($module_envdata . '/vendor/chartist-plugin-threshold/chartist-plugin-threshold.js');
-    drupal_add_js($module_envdata . '/vendor/chartist-plugin-axistitle/chartist-plugin-axistitle.min.js');
-    
-    // papaparse
-    drupal_add_js($module_envdata . '/vendor/papaparse/papaparse.min.js');
-
-    // jquery-modal
-    drupal_add_css($module_envdata . '/vendor/jquery-modal/jquery.modal.css');
-    drupal_add_js($module_envdata . '/vendor/jquery-modal/jquery.modal.min.js');
-  }
-}
-
 function envdata_menu() {
-  $items['ajax/save-chart'] = array(
-    'title' => 'Save chart as image file to server',
-    'page callback' => 'envdata_save_chart',
+  $items['envdata/chart/image/%'] = array(
+    'title' => 'save chart svg to image',
+    'page callback' => 'envdata_chart_image',
+    'page arguments' => array(3),
     'access arguments' => array('access content'),
     'type' => MENU_CALLBACK,
+    'file' => 'envdata.chart.inc',
+  );
+  $items['envdata/chart/svg/%'] = array(
+    'title' => 'render svg to html',
+    'page callback' => 'envdata_chart_svg',
+    'page arguments' => array(3),
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+    'file' => 'envdata.chart.inc',
   );
 
   return $items;
@@ -56,67 +44,38 @@ function envdata_block_view($delta = '') {
 
   switch ($delta) {
     case 'facility_realtime_charts':
-      $block['content'] = _envdata_facility_realtime_charts_content();
+      module_load_include('inc', 'envdata', 'envdata.chart');
+      if(arg(0) == 'facility' && arg(1)){
+        $vars = array(
+          'registration_no' => arg(1),
+        );
+        $block['content'] = envdata_prepare_chart($vars);
+      }
       break;
   }
 
   return $block;
 }
 
-function _envdata_facility_realtime_charts_content() {
-  global $base_url;
-  $arg              = arg();
-  $output           = '';
-  $registration_no  = $arg[0] == 'facility' && isset($arg[1]) && !isset($arg[2]) ? $arg[1] : '';
-  $data_url         = $registration_no ? $base_url . '/realtime/chimney_cache/1day/' . $registration_no . '.csv' : '';
-  $csv_file_path    = $data_url ? $_SERVER['DOCUMENT_ROOT'] . '/realtime/chimney_cache/1day/' . $registration_no . '.csv' : '';
-  $csv_exists       = file_exists($csv_file_path) ? TRUE : FALSE;
-  $envdata_settings = array();
+
+function envdata_add_resource(){
   $module_envdata   = drupal_get_path('module', 'envdata');
 
-  // If csv url and file exist, init chartist
-  if ($data_url && $csv_exists) {
-    $output .= '<div id="charts"></div>';
-
-    $envdata_settings['dataURL'] = $data_url;
-    $envdata_settings['chartist_load'] = FALSE;
-    drupal_add_css($module_envdata . '/css/envdata-facility-charts.css');
-    drupal_add_js(array('envdata' => $envdata_settings), 'setting');    
-    drupal_add_js($module_envdata . '/js/fbjs-init.js');
-    drupal_add_js($module_envdata . '/js/envdata-facility-charts.js');
-  }
-
-  return $output;
-}
-
-function envdata_save_chart() {
-  global $base_url;
-  $file_public_path = variable_get('file_public_path', conf_path() . '/files');
-
-  if (isset($_POST['imgData']) && isset($_POST['fileName'])) {
-    $img_data           = $_POST['imgData'];
-
-    // Remove the headers (data:,) part.
-    // A real application should use them according to needs such as to check image type
-    $img_filtered_data  = substr($img_data, strpos($img_data, ',')+1);
-
-    // Need to decode before saving since the data we received is already base64 encoded
-    $img_unencoded_data = base64_decode($img_filtered_data);
-
-    $scheme     = 'public';
-    $dir        = "screenshot/charts/facility";
-    $scheme_dir = $scheme . '://' . $dir;
-
-    file_prepare_directory($scheme_dir, FILE_CREATE_DIRECTORY);
+  // chartist
+  drupal_add_css($module_envdata . '/vendor/chartist/chartist.min.css');
+  drupal_add_js($module_envdata . '/vendor/chartist/chartist.min.js');
+  drupal_add_js($module_envdata . '/vendor/chartist-plugin-threshold/chartist-plugin-threshold.js');
+  drupal_add_js($module_envdata . '/vendor/chartist-plugin-axistitle/chartist-plugin-axistitle.min.js');
   
-    $file_name  = drupal_hash_base64($_POST['fileName']) . '.png';
-    $file_uri   = $scheme_dir . '/' . $file_name;
-    
-    file_unmanaged_save_data($img_unencoded_data, $file_uri, FILE_EXISTS_REPLACE);
+  // papaparse
+  drupal_add_js($module_envdata . '/vendor/papaparse/papaparse.min.js');
 
-    $img_url = $base_url . '/' . $file_public_path . '/' . $dir . '/' . $file_name;
+  // jquery-modal
+  drupal_add_css($module_envdata . '/vendor/jquery-modal/jquery.modal.css');
+  drupal_add_js($module_envdata . '/vendor/jquery-modal/jquery.modal.min.js');
 
-    drupal_json_output($img_url);
-    drupal_exit();
-  }
+  // module custom
+  drupal_add_css($module_envdata . '/css/envdata-facility-charts.css');
+  drupal_add_js($module_envdata . '/js/fbjs-init.js');
+  drupal_add_js($module_envdata . '/js/envdata-facility-charts.js');
 }
