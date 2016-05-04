@@ -12,8 +12,96 @@
   fill: #2196F3;
 }
 
+/* chart item */
+.chart-item .chart-btns {
+  text-align: right;
+}
+.chart-item .chart-btn {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 2px 8px;
+  font-size: 14px;
+  background: #616161;
+  color: #fff;
+  text-decoration: none;
+}
+.chart-item .chart-btn:last-child {
+  margin-right: 0;
+}
+.chart-item .chart-report-btn {
+  background: #D32F2F;
+}
+
+/* tabs */
+.tabs-container {
+  position: relative;
+}
+.tabs-control {
+  margin-bottom: 10px;
+}
+.tabs-control .tab {
+  display: inline-block;
+  margin-right: 10px;
+  padding-right: 10px;
+}
+.tabs-control .tab:last-child {
+  margin-right: 0;
+  padding-right: 0;
+}
+
+/* chart tabs */
+.chart-tabs {
+  margin-bottom: 15px;
+}
+.chart-tabs .tabs-control {
+  position: absolute;
+  right: 0;
+}
+.chart-tabs .tab {
+  line-height: 1;
+  border-right: 1px solid #616161;
+}
+.chart-tabs .tab:last-child {
+  border-right: 0;
+}
+.chart-tabs .tab a {
+  color: #616161;
+}
+.chart-tabs .tab.active a {
+  color: #E34B39;
+}
+
+/* jquery modal */
+.jquery-modal {
+  z-index: 10000;
+}
+.jquery-modal .modal {
+  z-index: 10001;
+}
+
 /* chart share modal */
 #chart-share-modal {
   width: 50%;
   max-width: 600px;
+}
+#chart-share-modal .facility-name,
+#chart-share-modal .chart-name {
+  margin-right: 160px;
+}
+#chart-share-modal .facility-name {}
+#chart-share-modal .chart-name {}
+#chart-share-modal .share-btns-top {
+  position: absolute;
+  top: 0;
+  right: 0;
+  margin: 20px;
+}
+#chart-share-modal .share-btns-bottom {
+  text-align: center;
+  margin: 20px 0 10px 0;
+}
+#chart-share-modal .fb-share-btn {
+  color: #fff;
+  background-color: #39579A;
+  padding: 4px 8px;
 }

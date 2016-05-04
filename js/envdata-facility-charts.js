@@ -5,8 +5,15 @@
   Drupal.behaviors.envdata = {
     attach: function (context, settings) {
       
-      var url = Drupal.settings.envdata.dataURL;      
-      var types = Drupal.settings.envdata.types;
+      var url          = Drupal.settings.envdata.dataURL;      
+      var types        = Drupal.settings.envdata.types;
+      var dataSum      = types.length;
+      var dataLoadNum  = 0;
+      var dataAllLoad  = false;
+      var chartSum     = 0;
+      var chartLoadNum = 0;
+      var chartAllLoad = false;
+
       var item = {
         "211": {
           "item": "211",
@@ -166,6 +173,11 @@
         }
       };
 
+      var typesName = {
+        "1day" : "24小時",
+        "30day" : "30天"
+      }
+
       var missingHours = function(obj) {
         var robj = {}, timestamp;
         for(var key in obj){
@@ -306,6 +318,50 @@
         );
       }
 
+      var groupChart = function() {
+        var $charts = $("#charts");
+        var $chartItem = $("#charts > .chart-item");
+        var group = [];
+        
+        $chartItem.each(function() {
+            var gid = $(this).attr("data-chart-gid");
+            if ($.inArray(gid, group) == -1) {
+              group.push(gid);
+            }
+        });
+        
+        for (index in group) {
+          var gid = group[index];
+          var chartGroupID = "cg-" + gid;
+          var tabsContainer = "<div id='" + chartGroupID + "' class='chart-group tabs-container chart-tabs'></div>";
+          $charts.append(tabsContainer);
+  
+          var $thisTabs = $("#" + chartGroupID);
+
+          var tabsControl = "<ul class='tabs-control'>";
+          var activeTab = 1;
+
+          $(".chart-item[data-chart-gid='" + gid + "']").each(function(i) {
+            var chartItemID = $(this).attr("id");  
+            var chartType = $(this).attr("data-chart-type");
+            
+            tabsControl += "<li class='tab' data-chart-type='" + chartType + "'><a href='#" + chartItemID + "'>" + typesName[chartType] + "</a></li>";
+            $(this).addClass("tabs-panel").appendTo($("#cg-" + gid));
+
+            activeTab = chartType == "30day" ? i + 1 : activeTab;
+          });
+
+          tabsControl += "</ul>";
+
+          $thisTabs.prepend(tabsControl);
+          
+          // Initialize tabslet plugin
+          $thisTabs.tabslet({
+            active: activeTab
+          });
+        } 
+      }
+
       var renderChart = function(results, type){
         var values = {};
         var i, indexo, row, index, datehour, max, avg, threshold;
@@ -363,6 +419,8 @@
 
           var keys = Object.keys(values[index]);
           var topValue;
+          var exceed = false;
+
           for (var i = 0; i < keys.length; i++) {
             var k = keys[i];
             data.labels.push(k);
@@ -384,11 +442,16 @@
             if (i == keys.length - 1) {
               // console.log("topValue: " + topValue);
 
-              if (v[1] && v[1] >= topValue) {
-                // console.log("threshold: " + v[1]);
-                v[1] += 10;
-                // console.log("high: " + v[1]);
-                chartOption.high = v[1];
+              if (v[1]) {
+                if (v[1] >= topValue) {
+                  // console.log("threshold: " + v[1]);
+                  v[1] += 10;
+                  // console.log("high: " + v[1]);
+                  chartOption.high = v[1];
+                } 
+                else {
+                  exceed = true;
+                }
               }
 
               topValue = undefined;
@@ -397,13 +460,16 @@
 
           // data["series"].push(line);
           // console.log(data);
-
           var chartID = "chart-" + index;
+          var chartGID = name[1] + "_" + name[2] + "_" + name[3];
           var chartName = name[2] + " - " + item[name[3]]["desp"];
-          var chartItem = "<div class='chart'>";
+          var chartItem = "<div id='ci-" + index + "' class='chart-item' data-chart-gid='" + chartGID + "' data-chart-type='" + type + "'>";
+          var chartBtnClass = exceed ? "chart-report-btn" : "chart-share-btn";
+          var chartBtnText = exceed ? "檢舉" : "分享";
+          var chartBtn = "<a class='chart-btn " + chartBtnClass + "' href='#' data-chart-id='" + chartID + "'>" + chartBtnText + "</a>";
           chartItem += "<h3>" + chartName + "</h3>";
-          chartItem += "<div class='chart-btns'><a class='chart-share-btn' href='#'>分享</a></div>";
-          chartItem += "<div id='" + chartID + "' class='" + index + " ct-chart' data-chart-name='" + chartName  + "'></div>";
+          chartItem += "<div class='chart-btns'>" + chartBtn + "</div>";
+          chartItem += "<div id='" + chartID + "' class='" + index + " chart ct-chart' data-chart-name='" + chartName  + "' data-chart-type='" + type + "'></div>";
           chartItem += "</div>";
           $root.append(chartItem);
 
@@ -417,85 +483,9 @@
           ];
           new Chartist.Line("." + index, data, chartOption);
           count++;
+          chartSum++;
           // if(count > 2) break;
         }
-
-        // Set chartist_load is true after gerenate all charts.
-        Drupal.settings.envdata.chartist_load = true;
-
-        // Show a share preview modal when user click chart share button.
-        $(".chart-btns").on("click", ".chart-share-btn", function(e) {
-          e.preventDefault();
-          var d = new Date(),
-            month = '' + (d.getMonth() + 1),
-            day = '' + d.getDate(),
-            year = d.getFullYear();
-          if (month.length < 2) month = '0' + month;
-          if (day.length < 2) day = '0' + day;
-          var ymd = [year, month, day].join('');
-
-          var $chart       = $(this).parent(".chart-btns").next(".ct-chart");
-          var chartID      = $chart.attr("id");
-          var chartName    = $chart.attr("data-chart-name");
-          var fileNameVal  = chartID.replace(/^chart-T/, '')+'_'+ymd;
-          var facilityName = $(".views-field-facility-name .field-content").text();
-          // var pngDataVal   = svgToPng(chartID);
-          
-          var postData = {
-          //  imgData: pngDataVal
-            imgURL: '/envdata/chart/svg/' + fileNameVal
-          };
-
-          var getURL = '/envdata/chart/image/' + fileNameVal;
-          $.ajax({
-            type: "POST",
-            url: getURL,
-            data: postData,
-            success: function(chartImgURL) {
-              console.log("成功將圖表圖片儲存於server後（ajax success），印出圖片網址： " + chartImgURL);
-
-              // Prepare share modal HTML.
-              var shareModal = "<div class='modal' id='chart-share-modal'><h3>[即時排放監測] " + facilityName + "</h3><h4>" + chartName + "</h4><div class='chart-img'><img src='" + chartImgURL + "' /></div><div class='share-btns'><a href='#' class='fb-share-btn'>立刻分享到Facebook</a></div></div>";
-              $("body").append(shareModal);
-              
-              // Open share modal automatically
-              $shareModal = $("#chart-share-modal");
-              $shareModal.modal();
-
-              // Remove share modal after modal closed
-              $('#chart-share-modal').on($.modal.AFTER_CLOSE, function(event, modal) {
-                $shareModal.remove();
-              });
-              
-              // Popup a facebook share dialog when user click facebook share button in share modal. 
-              $("#chart-share-modal").on("click", ".fb-share-btn", function(e) {
-                e.preventDefault();
-                
-                console.log("在送出分享設定參數之前，印出分享圖片網址： " + chartImgURL);
-
-                var dMethod  = "feed";
-                var dName    = "[即時排放監測] " + facilityName;
-                var dLink    = window.location.href;
-                var dPic     = chartImgURL;
-                var dDesc    = chartName;
-                var dCaption = "透明足跡 thaubing.gcaa.org.tw";
-
-                var dSettings = {
-                  method: dMethod,
-                  name: dName,
-                  link: dLink,
-                  picture: dPic,
-                  description: dDesc,
-                  caption: dCaption
-                };
-
-                // Send facebook share dialog settings to fbDialog function
-                fbDialog(dSettings);
-              });
-              
-            }
-          });
-        });
       }
 
       for(var key in types) {
@@ -505,12 +495,126 @@
             download: true,
             complete: function(results){
               renderChart(results, type);
+              dataLoadNum++;
             } 
           });
         })(dataURL, types[key]);
       }
+
+      var dataLoadComplete = setInterval(function() {
+        if (dataLoadNum == dataSum) {
+          console.log("data Load Complete !! dataSum: " + dataSum);
+          dataAllLoad = true;
+          clearInterval(dataLoadComplete);
+        }
+      }, 100);
+
+      var chartLoadComplete = setInterval(function() {
+        chartLoadNum = $(".ct-chart > svg").length;
+
+        if (dataAllLoad && chartLoadNum == chartSum) {
+          console.log("chart Load Complete !! chartSum: " + chartSum);
+          chartAllLoad = true;
+          clearInterval(chartLoadComplete);
+        }
+
+        if (chartAllLoad) { 
+          // Set chartist_load is true after gerenate all charts.
+          Drupal.settings.envdata.chartist_load = true;
+
+          // Group chart
+          groupChart();
+
+          // Show a share preview modal when user click chart share button.
+          $(".chart-btns").on("click", ".chart-btn", function(e) {
+            e.preventDefault();
+            var d = new Date(),
+              month = '' + (d.getMonth() + 1),
+              day = '' + d.getDate(),
+              year = d.getFullYear();
+            if (month.length < 2) month = '0' + month;
+            if (day.length < 2) day = '0' + day;
+            var ymd = [year, month, day].join('');
+
+            var $chart       = $(this).parent(".chart-btns").next(".ct-chart");
+            var chartID      = $chart.attr("id");
+            var chartType    = $chart.attr("data-chart-type");
+            var chartName    = $chart.attr("data-chart-name") + "（" + typesName[chartType] + "）";
+            var chartDate    = [year, month, day].join("/");
+            var fileNameVal  = chartID.replace(/^chart-T/, '')+'_'+ymd;
+            var facilityName = $(".views-field-facility-name .field-content").text();
+            // var pngDataVal   = svgToPng(chartID);
+            
+            var postData = {
+            //  imgData: pngDataVal
+              imgURL: '/envdata/chart/svg/' + fileNameVal
+            };
+
+            var getURL = '/envdata/chart/image/' + fileNameVal;
+            $.ajax({
+              type: "POST",
+              url: getURL,
+              data: postData,
+              success: function(chartImgURL) {
+                console.log("成功將圖表圖片儲存於server後（ajax success），印出圖片網址： " + chartImgURL);
+
+                var shareText = "<h5>找出污染足跡 加入檢舉行動</h5>";
+                shareText += "<p>看到工廠排放廢氣、廢水，卻不知道該拿它怎麼辦嗎？讓環境的隱形殺手現身，就靠「你」挺身而出！趕快來上「透明足跡」網站，當看到即時監測數據出現「超標」警訊，請按下「檢舉」，這個小動作會將超標的資料同時傳送到地方環保局和綠色公民行動聯盟，地方環保局一旦收到檢舉訊息，就會派員進行現場稽查，綠色公民行動聯盟也會針對這些檢舉訊息，進行後續的追蹤與了解。讓我們一起還原被污染的足跡。唯有透過全民一起參與監督，才能為台灣形成一個更有效的污染防治體系。</p>";
+                shareText += "<p>如果在「透明足跡」網站上看不到某家工廠排放廢氣、廢水的詳細資訊，這表示政府沒有公開甚至是沒有監測這家企業的污染排放資料。請您拍下該工廠排放污染的影片或照片，附上時間與地點，並對您所看到的情況作詳細的描述與說明。這些訊息同時會傳送到地方環保局和綠色公民行動聯盟，綠色公民行動聯盟會進行污染後續的追蹤與了解，並繼續督促政府公開該企業的即時監測數據。</p>";
+                shareText += "<p>推動政府資訊公開及監督企業污染排放，需要您的參與。</p>";
+
+                // Prepare share modal HTML.
+                var shareModal = "<div class='modal' id='chart-share-modal'>";
+                shareModal += "<h3 class='facility-name'>" + facilityName + " - " + chartDate + "</h3>";
+                shareModal += "<h4 class='chart-name'>" + chartName + "</h4>";
+                shareModal += "<div class='chart-img'><img src='" + chartImgURL + "' /></div>";
+                shareModal += "<div class='share-text'>" + shareText + "</div>";
+                shareModal += "<div class='share-btns-top'><a href='#' class='fb-share-btn'>立刻分享到Facebook</a></div>";
+                shareModal += "<div class='share-btns-bottom'><a href='#' class='fb-share-btn'>立刻分享到Facebook</a></div>";
+                shareModal += "</div>";
+                $("body").append(shareModal);
+                
+                // Open share modal automatically
+                $shareModal = $("#chart-share-modal");
+                $shareModal.modal();
+
+                // Remove share modal after modal closed
+                $('#chart-share-modal').on($.modal.AFTER_CLOSE, function(event, modal) {
+                  $shareModal.remove();
+                });
+
+                // Popup a facebook share dialog when user click facebook share button in share modal. 
+                $("#chart-share-modal").on("click", ".fb-share-btn", function(e) {
+                  e.preventDefault();
+                  
+                  console.log("在送出分享設定參數之前，印出分享圖片網址： " + chartImgURL);
+
+                  var dMethod  = "feed";
+                  var dName    = "[即時排放監測] " + facilityName + " - " + chartDate;
+                  var dLink    = window.location.href;
+                  var dPic     = chartImgURL;
+                  var dDesc    = chartName;
+                  var dCaption = "透明足跡 thaubing.gcaa.org.tw";
+
+                  var dSettings = {
+                    method: dMethod,
+                    name: dName,
+                    link: dLink,
+                    picture: dPic,
+                    description: dDesc,
+                    caption: dCaption
+                  };
+
+                  // Send facebook share dialog settings to fbDialog function
+                  fbDialog(dSettings);
+                });
+              }
+            });
+          });
+        }
+      }, 100);
     },
-    
+
     detach: function (context, settings, trigger) {
       // Undo something.
     }

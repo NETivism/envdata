@@ -74,6 +74,9 @@ function envdata_add_resource(){
   drupal_add_css($module_envdata . '/vendor/jquery-modal/jquery.modal.css');
   drupal_add_js($module_envdata . '/vendor/jquery-modal/jquery.modal.min.js');
 
+  // tabslet
+  drupal_add_js($module_envdata . '/vendor/tabslet/jquery.tabslet.min.js');
+
   // module custom
   drupal_add_css($module_envdata . '/css/envdata-facility-charts.css');
   drupal_add_js($module_envdata . '/js/fbjs-init.js');
