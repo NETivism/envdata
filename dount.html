@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Chartist: Animated Dount + Percentage</title>
+  <meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400italic,600,700%7COpen+Sans:300,400,400italic,600,700">
+  <link rel="stylesheet" href="vendor/chartist/chartist.min.css">
+  <style type="text/css">
+    body {
+      font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, "微軟正黑體", "Microsoft JhengHei", sans-serif;
+    }
+    #page {
+      margin: 0 auto;
+      padding: 20px 10px;
+      width: 800px;
+    }
+    .page-title {
+      margin-bottom: 60px;
+      text-align: center;
+    }
+    .ct-chart {
+      position: relative;
+      margin: 20px 0;
+    }
+    .ct-chart > svg {
+      vertical-align: middle;
+    }
+    .ct-chart .chart-percentage {
+      position: absolute;
+      top: 50%;
+      margin-top: -30px;
+      width: 100%;
+      height: 60px;
+      line-height: 60px;
+      text-align: center;
+      font-size: 32px;
+    }
+    .ct-series-p20 .ct-slice-donut { stroke: #B71C1C; }
+    .ct-series-p40 .ct-slice-donut { stroke: #F44336; }
+    .ct-series-p60 .ct-slice-donut { stroke: #FF9800; }
+    .ct-series-p80 .ct-slice-donut { stroke: #FFC107; }
+    .ct-series-p99 .ct-slice-donut { stroke: #CDDC39; }
+    .ct-series-p100 .ct-slice-donut { stroke: #8BC34A; }
+  </style>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+  <script type="text/javascript" src="vendor/papaparse/papaparse.min.js"></script>
+  <script type="text/javascript" src="vendor/chartist/chartist.min.js"></script>
+  <script type="text/javascript" src="vendor/chartist-plugin-threshold/chartist-plugin-threshold.min.js"></script>
+  <script type="text/javascript" src="vendor/chartist-plugin-axistitle/chartist-plugin-axistitle.min.js"></script>
+</head>
+<body>
+<div id="page">
+  <h1 class="page-title">Chartist: Animated Dount + Percentage</h1>
+  <div id="chart-dount-p20" data-dount-percent="20" class="ct-chart ct-chart-dount"></div>
+  <div id="chart-dount-p40" data-dount-percent="40" class="ct-chart ct-chart-dount"></div>
+  <div id="chart-dount-p60" data-dount-percent="60" class="ct-chart ct-chart-dount"></div>
+  <div id="chart-dount-p80" data-dount-percent="80" class="ct-chart ct-chart-dount"></div>
+  <div id="chart-dount-p99" data-dount-percent="99" class="ct-chart ct-chart-dount"></div>
+  <div id="chart-dount-p100" data-dount-percent="100" class="ct-chart ct-chart-dount"></div>
+  <script type="text/javascript">
+    var percentClass = function(percent) {
+      var result = "";
+
+      if (percent > 0 && percent <= 20) {
+        result = "ct-series-p20";
+      } 
+      if (percent > 20 && percent <= 40) {
+        result = "ct-series-p40";
+      }
+      if (percent > 40 && percent <= 60) {
+        result = "ct-series-p60";
+      }
+      if (percent > 60 && percent <= 80) {
+        result = "ct-series-p80";
+      }
+      if (percent > 80 && percent <= 99) {
+        result = "ct-series-p99";
+      }
+      if (percent == 100) {
+        result = "ct-series-p100";
+      }
+
+      return result;
+    }
+
+    var chartOption = {
+      donut: true,
+      donutWidth: 20,
+      startAngle: 0,
+      total: 100,
+      showLabel: false
+    };
+
+    var renderChart = function(elem, percent) {
+      var data = {
+        series: [{
+          value: percent,
+          className: percentClass(percent)
+        }]
+      };
+
+      var chart = new Chartist.Pie('#' + elem, data, chartOption);
+
+      chart.on('draw', function(data) {
+        if(data.type === 'slice') {
+          // Get the total path length in order to use for dash array animation
+          var pathLength = data.element._node.getTotalLength();
+
+          // Set a dasharray that matches the path length as prerequisite to animate dashoffset
+          data.element.attr({
+            'stroke-dasharray': pathLength + 'px ' + pathLength + 'px'
+          });
+
+          // Create animation definition while also assigning an ID to the animation for later sync usage
+          var animationDefinition = {
+            'stroke-dashoffset': {
+              id: 'anim' + data.index,
+              dur: 1000,
+              from: -pathLength + 'px',
+              to:  '0px',
+              easing: Chartist.Svg.Easing.easeOutQuint,
+              // We need to use `fill: 'freeze'` otherwise our animation will fall back to initial (not visible)
+              fill: 'freeze'
+            }
+          };
+
+          // If this was not the first slice, we need to time the animation so that it uses the end sync event of the previous animation
+          if(data.index !== 0) {
+            animationDefinition['stroke-dashoffset'].begin = 'anim' + (data.index - 1) + '.end';
+          }
+
+          // We need to set an initial value before the animation starts as we are not in guided mode which would do that for us
+          data.element.attr({
+            'stroke-dashoffset': -pathLength + 'px'
+          });
+
+          // We can't use guided mode as the animations need to rely on setting begin manually
+          // See http://gionkunz.github.io/chartist-js/api-documentation.html#chartistsvg-function-animate
+          data.element.animate(animationDefinition, false);
+        }
+      });
+
+      // For the sake of the example we update the chart every time it's created with a delay of 8 seconds
+      chart.on('created', function() {
+        if(window.__anim21278907124) {
+          clearTimeout(window.__anim21278907124);
+          window.__anim21278907124 = null;
+        }
+        window.__anim21278907124 = setTimeout(chart.update.bind(chart), 10000);
+      });
+    }
+
+    $(".ct-chart-dount").each(function() {
+      var chartID = $(this).attr("id");
+      var percent = $(this).attr("data-dount-percent");
+      
+      renderChart(chartID, percent);
+      
+      var chartExist = setInterval(function() { addPercentage("#" + chartID, "svg[class^='ct-chart']", percent); }, 100);  
+      var addPercentage = function(container, elem, percent) {
+        if (typeof container !== undefined && typeof elem !== undefined) {
+          var $container = $(container);
+
+          if ($container.find(elem).length > 0) {
+            console.log('$("' + container + ' ' + elem + '")' + ' Exists!');
+            clearInterval(chartExist);
+            var output = "<div class='chart-percentage'>" + percent + "%</div>";
+            $container.append(output);
+          }
+        }
+      };
+    });
+  </script>
+</body>
+</html>
