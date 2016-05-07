@@ -178,6 +178,27 @@
         "30day" : "30天"
       }
 
+      var dateFromYmd = function(str) {
+        var y = str.substr(0, 4),
+            m = str.substr(4, 2) - 1,
+            d = str.substr(6, 2);
+        var D = new Date(y, m, d);
+
+        return (D.getFullYear() == y && D.getMonth() == m && D.getDate() == d) ? D : "invalid date";
+      }
+
+      var formatDate = function(date, separator) {
+        var D = new Date(date),
+            m = "" + (D.getMonth() + 1),
+            d = "" + D.getDate(),
+            y = D.getFullYear();
+
+        if (m.length < 2) m = "0" + m;
+        if (d.length < 2) d = "0" + d;
+
+        return [y, m, d].join(separator);
+      }
+
       var missingHours = function(obj) {
         var robj = {}, timestamp;
         for(var key in obj){
@@ -201,7 +222,7 @@
 
           // for next loop
           timestamp = date.getTime();
-          robj[dtmp[4]] = o;
+          robj["t"+dtmp[4]] = o;
         }
         return robj;
       }
@@ -212,9 +233,9 @@
           axisClass: "ct-axis-title",
           offset: {
             x: 0,
-            y: 0
+            y: 40
           },
-          textAnchor: "end",
+          textAnchor: "middle",
         },
 
         axisY: {
@@ -233,6 +254,12 @@
         axisY: {
           type: Chartist.AutoScaleAxis,
           onlyInteger: true
+        },
+        chartPadding: {
+          top: 15,
+          right: 15,
+          bottom: 30,
+          left: 10
         },
         lineSmooth: false,
         series: {
@@ -373,6 +400,8 @@
           if(row.length < 5) continue;
           index = type+'_'+row[0] + "_" + row[1] + "_" + row[2];
 
+
+
           // apply filter parameter from drupal setting
           var include = 1;
           if(filter){
@@ -392,6 +421,17 @@
               values[index] = [];
             }
             values[index][row[5]] = [max, threshold];
+
+            /*
+            if (i==0) {
+              if (type=='1day') {
+                console.log('1day: '+row[5]);
+              } else {
+                console.log('30day: '+row[5]);
+              }
+            }
+            */
+
             indexo = index;
           }
         }
@@ -403,6 +443,8 @@
 
         for(index in values) {
           var name = index.split("_");
+          var dateStart =Object.keys(values[index])[0];
+
           if(type == '1day') {
             values[index] = missingHours(values[index]);
           }
@@ -418,12 +460,25 @@
           }
 
           var keys = Object.keys(values[index]);
-          var topValue;
           var exceed = false;
+          var topValue;
 
+          //console.log(values[index]);
           for (var i = 0; i < keys.length; i++) {
             var k = keys[i];
-            data.labels.push(k);
+
+            switch (type) {
+              case "1day":
+                var hour = k.replace("t", "");
+                data.labels.push(hour);
+                break;
+
+              case "30day":
+                var day = k.substr(6, 2);
+                data.labels.push(day);
+                break;
+            } 
+
 
             var v = values[index][k];
 
@@ -477,6 +532,22 @@
           // that is resolving to our chart container element. The Second parameter
           // is the actual data object.
           axisTitleOption.axisY.axisTitle = item[name[3]]["unit"];
+
+          var axTitle;
+
+          switch (type) {
+            case "1day":
+              var ds = dateStart.split("-");
+              axTitle = "從 " + formatDate(dateFromYmd(ds[0]), "/") + " " + ds[1] + ":00 起的 24 小時";
+              break;
+
+            case "30day":
+              axTitle = "從 " + formatDate(dateFromYmd(dateStart), "/") + " 起的 30 天";
+              break;
+          } 
+
+          if (typeof axTitle != "undefined") axisTitleOption.axisX.axisTitle = axTitle;
+          
           chartOption.plugins = [
             //Chartist.plugins.ctThreshold({threshold: 40}),
             Chartist.plugins.ctAxisTitle(axisTitleOption)
