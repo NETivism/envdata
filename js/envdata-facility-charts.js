@@ -446,7 +446,9 @@
           var dateStart =Object.keys(values[index])[0];
 
           if(type == '1day') {
+            console.log( values[index] );
             values[index] = missingHours(values[index]);
+            console.log( values[index] );
           }
           var dataVals = [];
           var thresholdVals = [];
@@ -463,6 +465,9 @@
           var exceed = false;
           var topValue;
 
+          if (type == '1day') {
+            console.log(keys);
+          }
           //console.log(values[index]);
           for (var i = 0; i < keys.length; i++) {
             var k = keys[i];
