@@ -178,6 +178,40 @@
         "30day" : "30天"
       }
 
+      var sortObj = function (obj, order) {
+        // Based on https://gist.github.com/CFJSGeek/5550678
+        var key, i, 
+            tempArray = [],
+            tempObj = {},
+            order = typeof order !== "undefined" ? order : "asc";
+
+        for (key in obj) {
+          tempArray.push(key);
+        }
+
+        tempArray.sort(
+          function(a, b) {
+            return a.toLowerCase().localeCompare(b.toLowerCase());
+          }
+        );
+
+        switch (order) {
+          case "desc":
+            for (i = tempArray.length - 1; i >= 0; i--) {
+              tempObj[tempArray[i]] = obj[tempArray[i]];
+            }
+            break;
+
+          default:
+            for (i = 0; i < tempArray.length; i++) {
+              tempObj[tempArray[i]] = obj[tempArray[i]];
+            }
+            break;
+        }
+
+        return tempObj;
+      }
+
       var dateFromYmd = function(str) {
         var y = str.substr(0, 4),
             m = str.substr(4, 2) - 1,
@@ -436,20 +470,23 @@
           }
         }
 
-        // crete chart
+        // create chart
         var data, line, $div, $h3;
         var $root = $("#charts");
         var count = 0;
 
         for(index in values) {
           var name = index.split("_");
-          var dateStart =Object.keys(values[index])[0];
-
+          
+          // Reordering object in the beginning to ensure order of time is correct
+          values[index] = sortObj(values[index]);
+          
+          var dateStart = Object.keys(values[index])[0];
+          
           if(type == '1day') {
-            console.log( values[index] );
             values[index] = missingHours(values[index]);
-            console.log( values[index] );
           }
+
           var dataVals = [];
           var thresholdVals = [];
 
@@ -465,9 +502,6 @@
           var exceed = false;
           var topValue;
 
-          if (type == '1day') {
-            console.log(keys);
-          }
           //console.log(values[index]);
           for (var i = 0; i < keys.length; i++) {
             var k = keys[i];
@@ -483,7 +517,6 @@
                 data.labels.push(day);
                 break;
             } 
-
 
             var v = values[index][k];
 
