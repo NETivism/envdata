@@ -559,9 +559,9 @@
           var chartItem = "<div id='ci-" + index + "' class='chart-item' data-chart-gid='" + chartGID + "' data-chart-type='" + type + "'>";
           var chartBtnClass = exceed ? "chart-report-btn" : "chart-share-btn";
           var chartBtnText = exceed ? "檢舉" : "分享";
-          var chartBtn = "<a class='chart-btn " + chartBtnClass + "' href='#' data-chart-id='" + chartID + "'>" + chartBtnText + "</a>";
+          var chartBtn = exceed ? "<a class='chart-btn " + chartBtnClass + "' href='#' data-chart-id='" + chartID + "'>" + chartBtnText + "</a>" : "";
           chartItem += "<h3>" + chartName + "</h3>";
-          chartItem += "<div class='chart-btns'>" + chartBtn + "</div>";
+          chartItem += "<div class='chart-btns'>" + chartBtn + "<a href='"+Drupal.settings.envdata.helplink+"' title='為何超標? 標準如何判定?' target='_blank'><span class='fa fa-question-circle'></span></a></div>";
           chartItem += "<div id='" + chartID + "' class='" + index + " chart ct-chart' data-chart-name='" + chartName  + "' data-chart-type='" + type + "'></div>";
           chartItem += "</div>";
           $root.append(chartItem);

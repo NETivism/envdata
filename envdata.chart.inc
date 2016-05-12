@@ -13,6 +13,7 @@ function envdata_prepare_chart($vars) {
     $settings = array();
     $settings['chartist_load'] = FALSE;
     $settings['filter'] = !empty($vars['filter']) ? $vars['filter'] : '';
+    $settings['helplink'] = url('node/18');
     $pass = FALSE;
     if(!empty($vars['type'])){
       $settings['types'] = array($vars['type']);
