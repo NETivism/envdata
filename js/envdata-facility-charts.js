@@ -7,6 +7,7 @@
       
       var url          = Drupal.settings.envdata.dataURL;      
       var types        = Drupal.settings.envdata.types;
+      var typeDefault  = '30day';
       var dataSum      = types.length;
       var dataLoadNum  = 0;
       var dataAllLoad  = false;
@@ -370,10 +371,10 @@
         FB.ui(settings,
           function(response) {
             if (response && response.post_id) {
-              console.log("分享成功！");
+              // console.log("分享成功！");
             } 
             else {
-              console.log("分享失敗...");
+              // console.log("分享失敗...");
             }
           }
         );
@@ -409,7 +410,7 @@
             tabsControl += "<li class='tab' data-chart-type='" + chartType + "'><a href='#" + chartItemID + "'>" + typesName[chartType] + "</a></li>";
             $(this).addClass("tabs-panel").appendTo($("#cg-" + gid));
 
-            activeTab = chartType == "30day" ? i + 1 : activeTab;
+            activeTab = chartType == typeDefault ? i + 1 : activeTab;
           });
 
           tabsControl += "</ul>";
@@ -501,8 +502,9 @@
           var keys = Object.keys(values[index]);
           var exceed = false;
           var topValue;
+          var lastMonitorId;
 
-          //console.log(values[index]);
+          // console.log(values[index]);
           for (var i = 0; i < keys.length; i++) {
             var k = keys[i];
 
@@ -560,8 +562,16 @@
           var chartBtnClass = exceed ? "chart-report-btn" : "chart-share-btn";
           var chartBtnText = exceed ? "檢舉" : "分享";
           var chartBtn = exceed ? "<a class='chart-btn " + chartBtnClass + "' href='#' data-chart-id='" + chartID + "'>" + chartBtnText + "</a>" : "";
-          chartItem += "<h3>" + chartName + "</h3>";
-          chartItem += "<div class='chart-btns'>" + chartBtn + "<a href='"+Drupal.settings.envdata.helplink+"' title='為何超標? 標準如何判定?' target='_blank'><span class='fa fa-question-circle'></span></a></div>";
+          if (lastMonitorId !== name[2] && type == typeDefault) {
+            chartItem += '<h3>'+ name[2] +'</h3>';
+          }
+          lastMonitorId = name[2];
+          var title = (type === typeDefault) ? "<h4>" + chartName + "</h4>" : "<strong>" + chartName + "</strong>";
+          chartItem += title; 
+          
+          if(chartBtn){
+            chartItem += "<div class='chart-btns'>" + chartBtn + "<a href='"+Drupal.settings.envdata.helplink+"' title='為何超標? 標準如何判定?' target='_blank'><span class='fa fa-question-circle'></span></a></div>";
+          }
           chartItem += "<div id='" + chartID + "' class='" + index + " chart ct-chart' data-chart-name='" + chartName  + "' data-chart-type='" + type + "'></div>";
           chartItem += "</div>";
           $root.append(chartItem);
@@ -612,7 +622,7 @@
 
       var dataLoadComplete = setInterval(function() {
         if (dataLoadNum == dataSum) {
-          console.log("data Load Complete !! dataSum: " + dataSum);
+          // console.log("data Load Complete !! dataSum: " + dataSum);
           dataAllLoad = true;
           clearInterval(dataLoadComplete);
         }
@@ -622,7 +632,7 @@
         chartLoadNum = $(".ct-chart > svg").length;
 
         if (dataAllLoad && chartLoadNum == chartSum) {
-          console.log("chart Load Complete !! chartSum: " + chartSum);
+          // console.log("chart Load Complete !! chartSum: " + chartSum);
           chartAllLoad = true;
           clearInterval(chartLoadComplete);
         }
