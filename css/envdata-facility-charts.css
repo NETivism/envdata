@@ -100,8 +100,14 @@
   text-align: center;
   margin: 20px 0 10px 0;
 }
-#chart-share-modal .fb-share-btn {
+#chart-share-modal .btn {
   color: #fff;
-  background-color: #39579A;
   padding: 4px 8px;
+  margin: 3px 5px;
+}
+#chart-share-modal .fb-share-btn {
+  background-color: #39579A;
+}
+#chart-share-modal .report-btn {
+  background-color: #E34B39;
 }

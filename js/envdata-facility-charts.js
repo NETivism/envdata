@@ -662,6 +662,7 @@
             var chartDate    = [year, month, day].join("/");
             var fileNameVal  = chartID.replace(/^chart-T/, '')+'_'+ymd;
             var facilityName = $(".views-field-facility-name .field-content").text();
+            var registrationNo = fileNameVal.split('_')[1];
             // var pngDataVal   = svgToPng(chartID);
             
             var postData = {
@@ -675,7 +676,7 @@
               url: getURL,
               data: postData,
               success: function(chartImgURL) {
-                console.log("成功將圖表圖片儲存於server後（ajax success），印出圖片網址： " + chartImgURL);
+                // console.log("成功將圖表圖片儲存於server後（ajax success），印出圖片網址： " + chartImgURL);
 
                 var shareText = "<h5>找出污染足跡 加入檢舉行動</h5>";
                 shareText += "<p>看到工廠排放廢氣、廢水，卻不知道該拿它怎麼辦嗎？讓環境的隱形殺手現身，就靠「你」挺身而出！趕快來上「透明足跡」網站，當看到即時監測數據出現「超標」警訊，請按下「檢舉」，這個小動作會將超標的資料同時傳送到地方環保局和綠色公民行動聯盟，地方環保局一旦收到檢舉訊息，就會派員進行現場稽查，綠色公民行動聯盟也會針對這些檢舉訊息，進行後續的追蹤與了解。讓我們一起還原被污染的足跡。唯有透過全民一起參與監督，才能為台灣形成一個更有效的污染防治體系。</p>";
@@ -688,8 +689,10 @@
                 shareModal += "<h4 class='chart-name'>" + chartName + "</h4>";
                 shareModal += "<div class='chart-img'><img src='" + chartImgURL + "' /></div>";
                 shareModal += "<div class='share-text'>" + shareText + "</div>";
-                shareModal += "<div class='share-btns-top'><a href='#' class='fb-share-btn'>立刻分享到Facebook</a></div>";
-                shareModal += "<div class='share-btns-bottom'><a href='#' class='fb-share-btn'>立刻分享到Facebook</a></div>";
+                // shareModal += "<div class='share-btns-top'><a href='#' class='fb-share-btn'>分享到Facebook</a></div>";
+                shareModal += "<div class='share-btns-bottom'>";
+                shareModal += "<a href='#' class='btn fb-share-btn'>分享到Facebook <i class='fa fa-share'></i></a>";
+                shareModal += "<a href='/report/submit?report_picture="+encodeURI(chartImgURL)+"&registration_no=" + registrationNo + "' class='btn report-btn' target='_blank'>立即檢舉 <i class='fa fa-ban'></i></a>";
                 shareModal += "</div>";
                 $("body").append(shareModal);
                 

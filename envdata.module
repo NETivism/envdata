@@ -63,6 +63,9 @@ function envdata_block_view($delta = '') {
 
 function envdata_add_resource($type = 'all'){
   $module_envdata   = drupal_get_path('module', 'envdata');
+  $js_option = array(
+    'preprocess' => FALSE,
+  );
 
   if($type == 'chartist' || $type == 'all') {
     // chartist
@@ -74,24 +77,56 @@ function envdata_add_resource($type = 'all'){
 
   // papaparse
   if($type == 'papaparse' || $type == 'all') {
-    drupal_add_js($module_envdata . '/vendor/papaparse/papaparse.min.js');
+    drupal_add_js($module_envdata . '/vendor/papaparse/papaparse.min.js', $js_option);
   }
 
   // jquery-modal
   if($type == 'jquery-modal' || $type == 'all') {
     drupal_add_css($module_envdata . '/vendor/jquery-modal/jquery.modal.css');
-    drupal_add_js($module_envdata . '/vendor/jquery-modal/jquery.modal.min.js');
+    drupal_add_js($module_envdata . '/vendor/jquery-modal/jquery.modal.min.js', $js_option);
   }
 
   // tabslet
   if($type == 'tabslet' || $type == 'all') {
-    drupal_add_js($module_envdata . '/vendor/tabslet/jquery.tabslet.min.js');
+    drupal_add_js($module_envdata . '/vendor/tabslet/jquery.tabslet.min.js', $js_option);
   }
 
   // module custom
   if($type == 'envdata' || $type == 'all') {
     drupal_add_css($module_envdata . '/css/envdata-facility-charts.css');
-    drupal_add_js($module_envdata . '/js/fbjs-init.js');
-    drupal_add_js($module_envdata . '/js/envdata-facility-charts.js');
+    drupal_add_js($module_envdata . '/js/fbjs-init.js', $js_option);
+    drupal_add_js($module_envdata . '/js/envdata-facility-charts.js', $js_option);
+  }
+}
+
+function envdata_form_alter(&$form, &$form_state, $form_id){
+  if($form_id == 'webform_client_form_54') {
+    $not_found = FALSE;
+    if(isset($_GET['registration_no']) && isset($_GET['report_picture'])){
+      $no = strtolower($_GET['registration_no']);
+      $name = db_select('factory', 'f')
+        ->fields('f', array('facility_name'))
+        ->condition('registration_no', $no, 'LIKE')
+        ->execute()
+        ->fetchField();
+      if(!empty($name)) {
+        $form['submitted']['registration_no']['#default_value'] = $_GET['registration_no'];
+        $form['submitted']['registration_no']['#attributes']['readonly'] = 'readonly';
+        $form['submitted']['registration_no']['#description'] = $name.'('.$_GET['registration_no'].')';
+        $form['submitted']['report_picture']['#default_value'] = $_GET['report_picture'];
+        $form['submitted']['report_picture']['#attributes']['readonly'] = 'readonly';
+        $form['submitted']['report_picture']['#description'] = '<img src="'.$_GET['report_picture'].'" width="100%">';
+      }
+      else{
+        $not_found = TRUE;
+      }
+    }
+    else{
+      $not_found = TRUE;
+    }
+    if ($not_found) {
+      drupal_not_found();
+      drupal_exit();
+    }
   }
 }
