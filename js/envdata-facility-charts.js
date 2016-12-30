@@ -478,6 +478,11 @@
 
         for(index in values) {
           var name = index.split("_");
+          if (!Drupal.settings.envdata.loggedin) {
+            if (name[3][0] === '9') {
+              continue;
+            }
+          }
           
           // Reordering object in the beginning to ensure order of time is correct
           values[index] = sortObj(values[index]);
@@ -603,7 +608,10 @@
           new Chartist.Line("." + index, data, chartOption);
           count++;
           chartSum++;
-          // if(count > 2) break;
+        }
+
+        if (!count) {
+          $('#block-envdata-facility-realtime-charts .content #charts').html('<p>目前沒有任何資料可供繪製圖表。</p>');
         }
       }
 
