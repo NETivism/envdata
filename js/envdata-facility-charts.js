@@ -20,138 +20,161 @@
           "item": "211",
           "abbr": "OPC",
           "desp": "[均值]不透光率",
+          "help": "粒狀污染物",
           "unit": "%"
         },
         "222": {
           "item": "222",
           "abbr": "SOX",
           "desp": "[均值]二氧化硫",
+          "help": "29",
           "unit": "ppm"
         },
         "223": {
           "item": "223",
           "abbr": "NOX",
           "desp": "[均值]氮氧化物",
+          "help": "28",
           "unit": "ppm"
         },
         "224": {
           "item": "224",
           "abbr": "CO",
           "desp": "[均值]一氧化碳",
+          "help": "27",
           "unit": "ppm"
         },
         "225": {
           "item": "225",
           "abbr": "TRS",
           "desp": "[均值]總還原硫",
+          "help": "",
           "unit": "ppm"
         },
         "226": {
           "item": "226",
           "abbr": "HCL",
           "desp": "[均值]氯化氫",
+          "help": "33",
           "unit": "ppm"
         },
         "227": {
           "item": "227",
           "abbr": "VOC",
           "desp": "[均值]揮發性有機物",
+          "help": "",
           "unit": "ppm"
         },
         "228": {
           "item": "228",
           "abbr": "NMHC",
           "desp": "[均值]NMHC",
+          "help": "",
           "unit": "ppm"
         },
         "236": {
           "item": "236",
           "abbr": "O2",
           "desp": "[均值]氧氣",
+          "help": "",
           "unit": "%"
         },
         "237": {
           "item": "237",
           "abbr": "CO2",
           "desp": "[均值]二氧化碳",
+          "help": "26",
           "unit": "%"
         },
         "248": {
           "item": "248",
           "abbr": "FLOW",
           "desp": "[均值]排放流率",
+          "help": "",
           "unit": "Nm3/hr"
         },
         "259": {
           "item": "259",
           "abbr": "TEMP",
           "desp": "[均值]溫度",
+          "help": "",
           "unit": "℃"
         },
         "280": {
           "item": "280",
           "abbr": "CMH",
           "desp": "[均值]排放流率",
+          "help": "",
           "unit": "CMH"
         },
         "911": {
           "item": "911",
           "abbr": "OPC",
           "desp": "不透光率",
+          "help": "粒狀污染物",
           "unit": "%"
         },
         "922": {
           "item": "922",
           "abbr": "SOX",
           "desp": "二氧化硫",
+          "help": "29",
           "unit": "ppm"
         },
         "923": {
           "item": "923",
           "abbr": "NOX",
           "desp": "氮氧化物",
+          "help": "28",
           "unit": "ppm"
         },
         "924": {
           "item": "924",
           "abbr": "CO",
           "desp": "一氧化碳",
+          "help": "27",
           "unit": "ppm"
         },
         "925": {
           "item": "925",
           "abbr": "TRS",
           "desp": "總還原硫",
+          "help": "",
           "unit": "ppm"
         },
         "926": {
           "item": "926",
           "abbr": "HCL",
           "desp": "氯化氫",
+          "help": "33",
           "unit": "ppm"
         },
         "927": {
           "item": "927",
           "abbr": "VOC",
           "desp": "揮發性有機物",
+          "help": "",
           "unit": "ppm"
         },
         "928": {
           "item": "928",
           "abbr": "NMHC",
           "desp": "NMHC",
+          "help": "",
           "unit": "ppm"
         },
         "936": {
           "item": "936",
           "abbr": "O2",
           "desp": "氧氣",
+          "help": "",
           "unit": "%"
         },
         "937": {
           "item": "937",
           "abbr": "CO2",
           "desp": "二氧化碳",
+          "help": "26",
           "unit": "%"
         },
         "948": {
@@ -164,12 +187,14 @@
           "item": "959",
           "abbr": "TEMP",
           "desp": "溫度",
+          "help": "",
           "unit": "℃"
         },
         "980": {
           "item": "980",
           "abbr": "CMH",
           "desp": "排放流率",
+          "help": "",
           "unit": "CMH"
         }
       };
@@ -562,7 +587,11 @@
           // console.log(data);
           var chartID = "chart-" + index;
           var chartGID = name[1] + "_" + name[2] + "_" + name[3];
-          var chartName = name[2] + " - " + item[name[3]]["desp"];
+          var knowledgeUrl = "";
+          if (item[name[3]]["help"]) {
+            knowledgeUrl = '<a href="/knowledge/'+item[name[3]]["help"]+'" target="_blank" title="說明" class="help-link"><span class="fa fa-question-circle"></span></a>';
+          }
+          var chartName = name[2] + " - " + item[name[3]]["desp"] + knowledgeUrl;
           var chartItem = "<div id='ci-" + index + "' class='chart-item' data-chart-gid='" + chartGID + "' data-chart-type='" + type + "'>";
           var chartBtnClass = exceed ? "chart-report-btn" : "chart-share-btn";
           var chartBtnText = exceed ? "檢舉" : "分享";
@@ -575,7 +604,7 @@
           chartItem += title; 
           
           if(chartBtn){
-            chartItem += "<div class='chart-btns'>" + chartBtn + "<a href='"+Drupal.settings.envdata.helplink+"' title='為何超標? 標準如何判定?' target='_blank'><span class='fa fa-question-circle'></span></a></div>";
+            chartItem += "<div class='chart-btns'>" + chartBtn + "<a class='help-link' href='"+Drupal.settings.envdata.helplink+"' title='為何超標? 標準如何判定?' target='_blank'><span class='fa fa-question-circle'></span></a></div>";
           }
           chartItem += "<div id='" + chartID + "' class='" + index + " chart ct-chart' data-chart-name='" + chartName  + "' data-chart-type='" + type + "'></div>";
           chartItem += "</div>";
@@ -686,10 +715,10 @@
               success: function(chartImgURL) {
                 // console.log("成功將圖表圖片儲存於server後（ajax success），印出圖片網址： " + chartImgURL);
 
-                var shareText = "<h5>找出污染足跡 加入檢舉行動</h5>";
-                shareText += "<p>看到工廠排放廢氣、廢水，卻不知道該拿它怎麼辦嗎？讓環境的隱形殺手現身，就靠「你」挺身而出！趕快來上「透明足跡」網站，當看到即時監測數據出現「超標」警訊，請按下「檢舉」，這個小動作會將超標的資料同時傳送到地方環保局和綠色公民行動聯盟，地方環保局一旦收到檢舉訊息，就會派員進行現場稽查，綠色公民行動聯盟也會針對這些檢舉訊息，進行後續的追蹤與了解。讓我們一起還原被污染的足跡。唯有透過全民一起參與監督，才能為台灣形成一個更有效的污染防治體系。</p>";
-                shareText += "<p>如果在「透明足跡」網站上看不到某家工廠排放廢氣、廢水的詳細資訊，這表示政府沒有公開甚至是沒有監測這家企業的污染排放資料。請您拍下該工廠排放污染的影片或照片，附上時間與地點，並對您所看到的情況作詳細的描述與說明。這些訊息同時會傳送到地方環保局和綠色公民行動聯盟，綠色公民行動聯盟會進行污染後續的追蹤與了解，並繼續督促政府公開該企業的即時監測數據。</p>";
-                shareText += "<p>推動政府資訊公開及監督企業污染排放，需要您的參與。</p>";
+                var shareText = "<h5>加入監督行動，讓污染無所遁形！</h5>";
+                shareText += "<p>看到工廠排放廢氣、廢水，除了憤怒，不知道能有什麼行動，也不覺得能改變什麼嗎？綠色公民行動聯盟邀你一起加入「透明足跡」的監督行動！</p>";
+                shareText += "<p>綠盟彙整了企業污染排放資料，在「透明足跡」網站看到即時監測數據出現「超標」警訊，只需按下「分享」，就可把企業污染訊息傳出去，讓污染環境的企業現身！按下「立即檢舉」，會將超標資料通報給綠盟，也可進一步填寫陳情單向環保署檢舉。</p>";
+                shareText += "<p>過去我們把監督的權力與責任都交給政府，現在我們要將一部分的權力拿回來，唯有全民一起參與監督，才能打破環境治理的困境，「透明足跡」監督政府也監督企業，讓政府落實管制，讓企業負起社會責任。請你一起加入監督行動，讓污染無所遁形！</p>";
 
                 // Prepare share modal HTML.
                 var shareModal = "<div class='modal' id='chart-share-modal'>";
