@@ -14,6 +14,7 @@
       var chartSum     = 0;
       var chartLoadNum = 0;
       var chartAllLoad = false;
+      var loadingSvg      = Drupal.settings.envdata.loading;
 
       var item = {
         "211": {
@@ -594,8 +595,8 @@
           var chartName = name[2] + " - " + item[name[3]]["desp"] + knowledgeUrl;
           var chartItem = "<div id='ci-" + index + "' class='chart-item' data-chart-gid='" + chartGID + "' data-chart-type='" + type + "'>";
           var chartBtnClass = exceed ? "chart-report-btn" : "chart-share-btn";
-          var chartBtnText = exceed ? "檢舉" : "分享";
-          var chartBtn = exceed ? "<a class='chart-btn " + chartBtnClass + "' href='#' data-chart-id='" + chartID + "'>" + chartBtnText + "</a>" : "";
+          var chartBtnText = exceed ? "檢舉與分享" : "分享";
+          var chartBtn = exceed ? "<a class='chart-btn " + chartBtnClass + "' href='#' data-chart-id='" + chartID + "'><span class='fa fa-share'></span>" + chartBtnText + "</a>" : "";
           if (lastMonitorId !== name[2] && type == typeDefault) {
             chartItem += '<h3>'+ name[2] +'</h3>';
           }
@@ -604,7 +605,7 @@
           chartItem += title; 
           
           if(chartBtn){
-            chartItem += "<div class='chart-btns'>" + chartBtn + "<a class='help-link' href='"+Drupal.settings.envdata.helplink+"' title='為何超標? 標準如何判定?' target='_blank'><span class='fa fa-question-circle'></span></a></div>";
+            chartItem += "<div class='chart-btns'><a class='help-link' href='"+Drupal.settings.envdata.helplink+"' title='怎樣是排放超標？怎樣才達到違法要開罰的標準？' target='_blank'><span class='fa fa-question-circle'></span>超標說明</a>" + chartBtn + "</div>";
           }
           chartItem += "<div id='" + chartID + "' class='" + index + " chart ct-chart' data-chart-name='" + chartName  + "' data-chart-type='" + type + "'></div>";
           chartItem += "</div>";
@@ -683,6 +684,9 @@
 
           // Show a share preview modal when user click chart share button.
           $(".chart-btns").on("click", ".chart-btn", function(e) {
+            var $parent = $(this).parent(".chart-btns");
+            $parent.find('img.loading').remove();
+            $(this).after('<img class="loading" src="'+loadingSvg+'">');
             e.preventDefault();
             var d = new Date(),
               month = '' + (d.getMonth() + 1),
@@ -692,7 +696,7 @@
             if (day.length < 2) day = '0' + day;
             var ymd = [year, month, day].join('');
 
-            var $chart       = $(this).parent(".chart-btns").next(".ct-chart");
+            var $chart       = $parent.next(".ct-chart");
             var chartID      = $chart.attr("id");
             var chartType    = $chart.attr("data-chart-type");
             var chartName    = $chart.attr("data-chart-name") + "（" + typesName[chartType] + "）";
@@ -714,6 +718,7 @@
               data: postData,
               success: function(chartImgURL) {
                 // console.log("成功將圖表圖片儲存於server後（ajax success），印出圖片網址： " + chartImgURL);
+                $parent.find('img.loading').remove();
 
                 var shareText = "<h5>加入監督行動，讓污染無所遁形！</h5>";
                 shareText += "<p>看到工廠排放廢氣、廢水，除了憤怒，不知道能有什麼行動，也不覺得能改變什麼嗎？綠色公民行動聯盟邀你一起加入「透明足跡」的監督行動！</p>";
