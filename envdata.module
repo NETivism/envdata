@@ -4,15 +4,7 @@ ini_set('display_errors', TRUE);
 ini_set('display_startup_errors', TRUE);
 
 function envdata_init(){
-  global $user;
   envdata_add_resource('chartist');
-  
-  if ($user->uid) {
-    drupal_add_js(array('envdata' => array('loggedin' => 1)), 'setting');
-  }
-  else {
-    drupal_add_js(array('envdata' => array('loggedin' => 0)), 'setting');
-  }
 }
 
 function envdata_cron(){

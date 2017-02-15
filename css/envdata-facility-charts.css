@@ -95,11 +95,11 @@ line.ct-point:hover {
 
 /* chart tabs */
 .chart-tabs {
-  margin-bottom: 15px;
+  padding: 10px;
 }
 .chart-tabs .tabs-control {
   position: absolute;
-  right: 0;
+  right: 10px;
 }
 .chart-tabs .tab {
   line-height: 1;
@@ -156,6 +156,15 @@ line.ct-point:hover {
   background-color: #E34B39;
 }
 
+#charts .section-report{
+  background-color: #ffeae2;
+}
+#charts .section-report-des {
+  padding: 10px;
+}
+#charts .section-normal-des {
+  padding: 10px;
+}
 @media all and (max-width:959px) {
   .ct-labels foreignObject:nth-child(even) {
     display: none;

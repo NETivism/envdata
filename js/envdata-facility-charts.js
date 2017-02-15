@@ -475,6 +475,9 @@
               var chartItemID = $chartItem.attr("id");  
               $tabsControl.append("<li class='tab' data-chart-type='" + ctype + "'><a href='#" + chartItemID + "'>" + typesName[ctype] + "</a></li>");
               $chartItem.addClass("tabs-panel")
+              if($chartItem.find('.chart-report').length){
+                $thisTabs.addClass('section-report');
+              }
               $chartItem.appendTo($thisTabs);
             }
           }
@@ -716,11 +719,11 @@
               $root.append("<h3>"+pre.facility+"</h3>");
             }
             if (fine && !added && chartType == typeDefault) {
-              $root.append("<h4>裁罰依據</h4>");
+              $root.append('<div class="section-report section-report-des"><h4>裁罰依據</h4><p>按照法規，排放超標可開罰的標準是氣狀污染物（如二氧化硫、氮氧化物、一氧化碳、氯化氫）的小時均值，以及粒狀污染物6分鐘一筆的即時監測值</p></div>');
               added = 1;
             }
             if (!fine && added < 2 && chartType == typeDefault) {
-              $root.append("<h4>其他監測項目</h4>");
+              $root.append('<div class="section-normal section-normal-des"><h4>其他監測項目</h4><p>其他監測項目則是氣狀污染物15分鐘一筆的即時監測值，以及換算其他污染物濃度基準的監測項目</p></div>');
               added = 2;
             }
             $root.append(pre.item);
