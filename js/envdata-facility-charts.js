@@ -8,9 +8,9 @@
       $("#charts").addClass('is-processed');
 
       var url          = Drupal.settings.envdata.dataURL;      
-      var types        = Drupal.settings.envdata.types;
+      var chartTypes   = Drupal.settings.envdata.types;
       var typeDefault  = '30day';
-      var dataSum      = types.length;
+      var dataSum      = Drupal.settings.envdata.types.length;
       var dataLoadNum  = 0;
       var dataAllLoad  = false;
       var chartSum     = 0;
@@ -18,7 +18,7 @@
       var chartAllLoad = false;
       var loadingSvg   = Drupal.settings.envdata.loading;
 
-      var item = {
+      var facilityType = {
         "222": {
           "fine": true,
           "item": "222",
@@ -487,16 +487,19 @@
         }
       }
 
-      var renderChart = function(results, type){
+      var renderChart = function(results, chartType){
+        // two level object
         var values = {};
         var i, indexo, row, index, datehour, max, avg, threshold;
         var filter = Drupal.settings.envdata.filter;
 
+        // loop 
         // grouping by registration_no,facility_no,type
         for(i = 0; i < results.data.length; i++){
           row = results.data[i];
           if(row.length < 5) continue;
-          index = type+'_'+row[0] + "_" + row[1] + "_" + row[2];
+          // 1day_registrationNo_facilityNo_type
+          index = chartType+'_'+row[0] + "_" + row[1] + "_" + row[2];
 
           // apply filter parameter from drupal setting
           var include = 1;
@@ -520,7 +523,7 @@
 
             /*
             if (i==0) {
-              if (type=='1day') {
+              if (chartType=='1day') {
                 console.log('1day: '+row[5]);
               } else {
                 console.log('30day: '+row[5]);
@@ -545,7 +548,7 @@
           
           var dateStart = Object.keys(values[index])[0];
           
-          if(type == '1day') {
+          if(chartType == '1day') {
             values[index] = missingHours(values[index]);
           }
 
@@ -569,7 +572,7 @@
           for (var i = 0; i < keys.length; i++) {
             var k = keys[i];
 
-            switch (type) {
+            switch (chartType) {
               case "1day":
                 var hour = k.replace("t", "");
                 data.labels.push(hour);
@@ -618,38 +621,38 @@
           // console.log(data);
           var chartID = "chart-" + index;
           var chartGID = name[1] + "_" + name[2] + "_" + name[3];
-          var fine = item[name[3]]["fine"];
+          var fine = facilityType[name[3]]["fine"];
           var knowledgeUrl = "";
-          if (item[name[3]]["help"]) {
-            knowledgeUrl = '<a href="/knowledge/'+item[name[3]]["help"]+'" target="_blank" title="說明" class="help-link colorbox-node"><span class="fa fa-question-circle"></span></a>';
+          if (facilityType[name[3]]["help"]) {
+            knowledgeUrl = '<a href="/knowledge/'+facilityType[name[3]]["help"]+'" target="_blank" title="說明" class="help-link colorbox-node"><span class="fa fa-question-circle"></span></a>';
           }
-          var chartName = name[2] + " - " + item[name[3]]["desp"] + knowledgeUrl;
-          var chartItem = "<div id='ci-" + index + "' class='chart-item' data-chart-gid='" + chartGID + "' data-chart-type='" + type + "'>";
+          var chartName = name[2] + " - " + facilityType[name[3]]["desp"] + knowledgeUrl;
+          var chartItem = "<div id='ci-" + index + "' class='chart-item' data-chart-gid='" + chartGID + "' data-chart-type='" + chartType + "'>";
           var chartBtnClass = exceed && fine ? "chart-report-btn" : "chart-share-btn";
           var chartBtnText = exceed && fine ? "檢舉與分享" : "分享";
           var chartBtn = exceed ? "<a class='chart-btn " + chartBtnClass + "' href='#' data-chart-id='" + chartID + "'><span class='fa fa-share'></span>" + chartBtnText + "</a>" : "";
-          if (lastMonitorId !== name[2] && type == typeDefault) {
+          if (lastMonitorId !== name[2] && chartType == typeDefault) {
             chartItem += '<h3>'+ name[2] +'</h3>';
           }
           lastMonitorId = name[2];
-          var title = (type === typeDefault) ? "<h4>" + chartName + "</h4>" : "<strong>" + chartName + "</strong>";
+          var title = (chartType === typeDefault) ? "<h4>" + chartName + "</h4>" : "<strong>" + chartName + "</strong>";
           chartItem += title; 
           
           if(chartBtn){
             chartItem += "<div class='chart-btns'><a class='help-link colorbox-node' href='"+Drupal.settings.envdata.helplink+"' title='怎樣是排放超標？怎樣才達到違法要開罰的標準？' target='_blank'><span class='fa fa-question-circle'></span>超標說明</a>" + chartBtn + "</div>";
           }
-          chartItem += "<div id='" + chartID + "' class='" + index + " chart ct-chart' data-chart-name='" + chartName  + "' data-chart-type='" + type + "'></div>";
+          chartItem += "<div id='" + chartID + "' class='" + index + " chart ct-chart' data-chart-name='" + chartName  + "' data-chart-type='" + chartType + "'></div>";
           chartItem += "</div>";
           $root.append(chartItem);
 
           // Create a new line chart object where as first parameter we pass in a selector
           // that is resolving to our chart container element. The Second parameter
           // is the actual data object.
-          axisTitleOption.axisY.axisTitle = item[name[3]]["unit"];
+          axisTitleOption.axisY.axisTitle = facilityType[name[3]]["unit"];
 
           var axTitle;
 
-          switch (type) {
+          switch (chartType) {
             case "1day":
               var ds = dateStart.split("-");
               axTitle = "從 " + formatDate(dateFromYmd(ds[0]), "/") + " " + ds[1] + ":00 起的 24 小時";
@@ -804,8 +807,8 @@
       }, 500);
 
       // main function
-      for(var key in types) {
-        var dataURL = url.replace('{type}', types[key]);
+      for(var key in chartTypes) {
+        var dataURL = url.replace('{type}', chartTypes[key]);
         (function(url, type){
           Papa.parse(url, {
             download: true,
@@ -814,7 +817,7 @@
               dataLoadNum++;
             } 
           });
-        })(dataURL, types[key]);
+        })(dataURL, chartTypes[key]);
       }
     }); // for run only once
     },
