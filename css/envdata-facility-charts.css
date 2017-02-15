@@ -31,6 +31,9 @@
 .chart-item .chart-report-btn {
   background: #D32F2F;
 }
+.chart-item .chart-share-btn {
+  background: #095ddb;
+}
 
 /* tabs */
 .tabs-container {
@@ -81,7 +84,7 @@
 
 /* chart share modal */
 #chart-share-modal {
-  width: 50%;
+  width: 85%;
   max-width: 600px;
 }
 #chart-share-modal .facility-name,
@@ -110,4 +113,10 @@
 }
 #chart-share-modal .report-btn {
   background-color: #E34B39;
+}
+
+@media all and (max-width:959px) {
+  .ct-labels foreignObject:nth-child(even) {
+    display: none;
+  }
 }

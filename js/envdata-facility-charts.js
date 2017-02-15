@@ -4,7 +4,9 @@
 
   Drupal.behaviors.envdata = {
     attach: function (context, settings) {
-      
+    $("#charts:not(.is-processed)", context).once('envdata', function(){
+      $("#charts").addClass('is-processed');
+
       var url          = Drupal.settings.envdata.dataURL;      
       var types        = Drupal.settings.envdata.types;
       var typeDefault  = '30day';
@@ -14,17 +16,11 @@
       var chartSum     = 0;
       var chartLoadNum = 0;
       var chartAllLoad = false;
-      var loadingSvg      = Drupal.settings.envdata.loading;
+      var loadingSvg   = Drupal.settings.envdata.loading;
 
       var item = {
-        "211": {
-          "item": "211",
-          "abbr": "OPC",
-          "desp": "[均值]不透光率",
-          "help": "粒狀污染物",
-          "unit": "%"
-        },
         "222": {
+          "fine": true,
           "item": "222",
           "abbr": "SOX",
           "desp": "[均值]二氧化硫",
@@ -32,6 +28,7 @@
           "unit": "ppm"
         },
         "223": {
+          "fine": true,
           "item": "223",
           "abbr": "NOX",
           "desp": "[均值]氮氧化物",
@@ -39,6 +36,7 @@
           "unit": "ppm"
         },
         "224": {
+          "fine": true,
           "item": "224",
           "abbr": "CO",
           "desp": "[均值]一氧化碳",
@@ -46,6 +44,7 @@
           "unit": "ppm"
         },
         "225": {
+          "fine": true,
           "item": "225",
           "abbr": "TRS",
           "desp": "[均值]總還原硫",
@@ -53,13 +52,31 @@
           "unit": "ppm"
         },
         "226": {
+          "fine": true,
           "item": "226",
           "abbr": "HCL",
           "desp": "[均值]氯化氫",
           "help": "33",
           "unit": "ppm"
         },
+        "911": {
+          "fine": true,
+          "item": "911",
+          "abbr": "OPC",
+          "desp": "不透光率",
+          "help": "粒狀污染物",
+          "unit": "%"
+        },
+        "211": {
+          "fine": false,
+          "item": "211",
+          "abbr": "OPC",
+          "desp": "[均值]不透光率",
+          "help": "粒狀污染物",
+          "unit": "%"
+        },
         "227": {
+          "fine": false,
           "item": "227",
           "abbr": "VOC",
           "desp": "[均值]揮發性有機物",
@@ -67,6 +84,7 @@
           "unit": "ppm"
         },
         "228": {
+          "fine": false,
           "item": "228",
           "abbr": "NMHC",
           "desp": "[均值]NMHC",
@@ -74,6 +92,7 @@
           "unit": "ppm"
         },
         "236": {
+          "fine": false,
           "item": "236",
           "abbr": "O2",
           "desp": "[均值]氧氣",
@@ -81,6 +100,7 @@
           "unit": "%"
         },
         "237": {
+          "fine": false,
           "item": "237",
           "abbr": "CO2",
           "desp": "[均值]二氧化碳",
@@ -88,6 +108,7 @@
           "unit": "%"
         },
         "248": {
+          "fine": false,
           "item": "248",
           "abbr": "FLOW",
           "desp": "[均值]排放流率",
@@ -95,6 +116,7 @@
           "unit": "Nm3/hr"
         },
         "259": {
+          "fine": false,
           "item": "259",
           "abbr": "TEMP",
           "desp": "[均值]溫度",
@@ -102,20 +124,15 @@
           "unit": "℃"
         },
         "280": {
+          "fine": false,
           "item": "280",
           "abbr": "CMH",
           "desp": "[均值]排放流率",
           "help": "",
           "unit": "CMH"
         },
-        "911": {
-          "item": "911",
-          "abbr": "OPC",
-          "desp": "不透光率",
-          "help": "粒狀污染物",
-          "unit": "%"
-        },
         "922": {
+          "fine": false,
           "item": "922",
           "abbr": "SOX",
           "desp": "二氧化硫",
@@ -123,6 +140,7 @@
           "unit": "ppm"
         },
         "923": {
+          "fine": false,
           "item": "923",
           "abbr": "NOX",
           "desp": "氮氧化物",
@@ -130,6 +148,7 @@
           "unit": "ppm"
         },
         "924": {
+          "fine": false,
           "item": "924",
           "abbr": "CO",
           "desp": "一氧化碳",
@@ -137,6 +156,7 @@
           "unit": "ppm"
         },
         "925": {
+          "fine": false,
           "item": "925",
           "abbr": "TRS",
           "desp": "總還原硫",
@@ -144,6 +164,7 @@
           "unit": "ppm"
         },
         "926": {
+          "fine": false,
           "item": "926",
           "abbr": "HCL",
           "desp": "氯化氫",
@@ -151,6 +172,7 @@
           "unit": "ppm"
         },
         "927": {
+          "fine": false,
           "item": "927",
           "abbr": "VOC",
           "desp": "揮發性有機物",
@@ -158,6 +180,7 @@
           "unit": "ppm"
         },
         "928": {
+          "fine": false,
           "item": "928",
           "abbr": "NMHC",
           "desp": "NMHC",
@@ -165,6 +188,7 @@
           "unit": "ppm"
         },
         "936": {
+          "fine": false,
           "item": "936",
           "abbr": "O2",
           "desp": "氧氣",
@@ -172,6 +196,7 @@
           "unit": "%"
         },
         "937": {
+          "fine": false,
           "item": "937",
           "abbr": "CO2",
           "desp": "二氧化碳",
@@ -179,12 +204,14 @@
           "unit": "%"
         },
         "948": {
+          "fine": false,
           "item": "948",
           "abbr": "FLOW",
           "desp": "排放流率",
           "unit": "Nm3/hr"
         },
         "959": {
+          "fine": false,
           "item": "959",
           "abbr": "TEMP",
           "desp": "溫度",
@@ -192,6 +219,7 @@
           "unit": "℃"
         },
         "980": {
+          "fine": false,
           "item": "980",
           "abbr": "CMH",
           "desp": "排放流率",
@@ -439,7 +467,24 @@
           $thisTabs.tabslet({
             active: activeTab
           });
-        } 
+
+          $thisTabs.on("_after", function(){
+            // trigger resize event to prevent chart loosing width
+            $(this).find('.ct-chart:visible').each(function(e, tab){
+              tab.__chartist__.update();
+            });
+            /*
+            if (document.createEvent) { // W3C
+              window.dispatchEvent(new Event('resize'));
+            }
+            else { // IE
+              element = document.documentElement;
+              var ev = document.createEventObject();
+              element.fireEvent("onresize", ev);
+            }
+            */
+          });
+        }
       }
 
       var renderChart = function(results, type){
@@ -452,8 +497,6 @@
           row = results.data[i];
           if(row.length < 5) continue;
           index = type+'_'+row[0] + "_" + row[1] + "_" + row[2];
-
-
 
           // apply filter parameter from drupal setting
           var include = 1;
@@ -496,11 +539,6 @@
 
         for(index in values) {
           var name = index.split("_");
-          if (!Drupal.settings.envdata.loggedin) {
-            if (name[3][0] === '9') {
-              continue;
-            }
-          }
           
           // Reordering object in the beginning to ensure order of time is correct
           values[index] = sortObj(values[index]);
@@ -580,14 +618,15 @@
           // console.log(data);
           var chartID = "chart-" + index;
           var chartGID = name[1] + "_" + name[2] + "_" + name[3];
+          var fine = item[name[3]]["fine"];
           var knowledgeUrl = "";
           if (item[name[3]]["help"]) {
-            knowledgeUrl = '<a href="/knowledge/'+item[name[3]]["help"]+'" target="_blank" title="說明" class="help-link"><span class="fa fa-question-circle"></span></a>';
+            knowledgeUrl = '<a href="/knowledge/'+item[name[3]]["help"]+'" target="_blank" title="說明" class="help-link colorbox-node"><span class="fa fa-question-circle"></span></a>';
           }
           var chartName = name[2] + " - " + item[name[3]]["desp"] + knowledgeUrl;
           var chartItem = "<div id='ci-" + index + "' class='chart-item' data-chart-gid='" + chartGID + "' data-chart-type='" + type + "'>";
-          var chartBtnClass = exceed ? "chart-report-btn" : "chart-share-btn";
-          var chartBtnText = exceed ? "檢舉與分享" : "分享";
+          var chartBtnClass = exceed && fine ? "chart-report-btn" : "chart-share-btn";
+          var chartBtnText = exceed && fine ? "檢舉與分享" : "分享";
           var chartBtn = exceed ? "<a class='chart-btn " + chartBtnClass + "' href='#' data-chart-id='" + chartID + "'><span class='fa fa-share'></span>" + chartBtnText + "</a>" : "";
           if (lastMonitorId !== name[2] && type == typeDefault) {
             chartItem += '<h3>'+ name[2] +'</h3>';
@@ -597,7 +636,7 @@
           chartItem += title; 
           
           if(chartBtn){
-            chartItem += "<div class='chart-btns'><a class='help-link' href='"+Drupal.settings.envdata.helplink+"' title='怎樣是排放超標？怎樣才達到違法要開罰的標準？' target='_blank'><span class='fa fa-question-circle'></span>超標說明</a>" + chartBtn + "</div>";
+            chartItem += "<div class='chart-btns'><a class='help-link colorbox-node' href='"+Drupal.settings.envdata.helplink+"' title='怎樣是排放超標？怎樣才達到違法要開罰的標準？' target='_blank'><span class='fa fa-question-circle'></span>超標說明</a>" + chartBtn + "</div>";
           }
           chartItem += "<div id='" + chartID + "' class='" + index + " chart ct-chart' data-chart-name='" + chartName  + "' data-chart-type='" + type + "'></div>";
           chartItem += "</div>";
@@ -638,19 +677,6 @@
         }
       }
 
-      for(var key in types) {
-        var dataURL = url.replace('{type}', types[key]);
-        (function(url, type){
-          Papa.parse(url, {
-            download: true,
-            complete: function(results){
-              renderChart(results, type);
-              dataLoadNum++;
-            } 
-          });
-        })(dataURL, types[key]);
-      }
-
       var dataLoadComplete = setInterval(function() {
         if (dataLoadNum == dataSum) {
           // console.log("data Load Complete !! dataSum: " + dataSum);
@@ -668,15 +694,19 @@
           clearInterval(chartLoadComplete);
         }
 
-        if (chartAllLoad) { 
+        if (chartAllLoad) {
           // Set chartist_load is true after gerenate all charts.
           Drupal.settings.envdata.chartist_load = true;
+          $('.colorbox-node', context).once('init-colorbox-node-processed', function () {
+            $(this).colorboxNode({'launch': false});
+          });
 
           // Group chart
           groupChart();
 
           // Show a share preview modal when user click chart share button.
           $(".chart-btns").on("click", ".chart-btn", function(e) {
+            var report = $(this).hasClass('chart-report-btn');
             var $parent = $(this).parent(".chart-btns");
             $parent.find('img.loading').remove();
             $(this).after('<img class="loading" src="'+loadingSvg+'">');
@@ -727,7 +757,9 @@
                 // shareModal += "<div class='share-btns-top'><a href='#' class='fb-share-btn'>分享到Facebook</a></div>";
                 shareModal += "<div class='share-btns-bottom'>";
                 shareModal += "<a href='#' class='btn fb-share-btn'>分享到Facebook <i class='fa fa-share'></i></a>";
-                shareModal += "<a href='/report/submit?report_picture="+encodeURI(chartImgURL)+"&registration_no=" + registrationNo + "' class='btn report-btn' target='_blank'>立即檢舉 <i class='fa fa-ban'></i></a>";
+                if (report) {
+                  shareModal += "<a href='/report/submit?report_picture="+encodeURI(chartImgURL)+"&registration_no=" + registrationNo + "' class='btn report-btn' target='_blank'>立即檢舉 <i class='fa fa-ban'></i></a>";
+                }
                 shareModal += "</div>";
                 $("body").append(shareModal);
                 
@@ -744,7 +776,7 @@
                 $("#chart-share-modal").on("click", ".fb-share-btn", function(e) {
                   e.preventDefault();
                   
-                  console.log("在送出分享設定參數之前，印出分享圖片網址： " + chartImgURL);
+                  // console.log("在送出分享設定參數之前，印出分享圖片網址： " + chartImgURL);
 
                   var dMethod  = "feed";
                   var dName    = "[即時排放監測] " + facilityName + " - " + chartDate;
@@ -769,7 +801,22 @@
             });
           });
         }
-      }, 100);
+      }, 500);
+
+      // main function
+      for(var key in types) {
+        var dataURL = url.replace('{type}', types[key]);
+        (function(url, type){
+          Papa.parse(url, {
+            download: true,
+            complete: function(results){
+              renderChart(results, type);
+              dataLoadNum++;
+            } 
+          });
+        })(dataURL, types[key]);
+      }
+    }); // for run only once
     },
 
     detach: function (context, settings, trigger) {
