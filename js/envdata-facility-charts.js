@@ -21,6 +21,7 @@
       var facilityType = {
         "222": {
           "fine": true,
+          "order": 1,
           "item": "222",
           "abbr": "SOX",
           "desp": "[均值]二氧化硫",
@@ -29,6 +30,7 @@
         },
         "223": {
           "fine": true,
+          "order": 2,
           "item": "223",
           "abbr": "NOX",
           "desp": "[均值]氮氧化物",
@@ -37,6 +39,7 @@
         },
         "224": {
           "fine": true,
+          "order": 3,
           "item": "224",
           "abbr": "CO",
           "desp": "[均值]一氧化碳",
@@ -45,6 +48,7 @@
         },
         "225": {
           "fine": true,
+          "order": 4,
           "item": "225",
           "abbr": "TRS",
           "desp": "[均值]總還原硫",
@@ -53,6 +57,7 @@
         },
         "226": {
           "fine": true,
+          "order": 5,
           "item": "226",
           "abbr": "HCL",
           "desp": "[均值]氯化氫",
@@ -61,6 +66,7 @@
         },
         "911": {
           "fine": true,
+          "order": 6,
           "item": "911",
           "abbr": "OPC",
           "desp": "不透光率",
@@ -69,6 +75,7 @@
         },
         "211": {
           "fine": false,
+          "order": 7,
           "item": "211",
           "abbr": "OPC",
           "desp": "[均值]不透光率",
@@ -77,6 +84,7 @@
         },
         "227": {
           "fine": false,
+          "order": 8,
           "item": "227",
           "abbr": "VOC",
           "desp": "[均值]揮發性有機物",
@@ -85,6 +93,7 @@
         },
         "228": {
           "fine": false,
+          "order": 9,
           "item": "228",
           "abbr": "NMHC",
           "desp": "[均值]NMHC",
@@ -93,6 +102,7 @@
         },
         "236": {
           "fine": false,
+          "order": 10,
           "item": "236",
           "abbr": "O2",
           "desp": "[均值]氧氣",
@@ -101,6 +111,7 @@
         },
         "237": {
           "fine": false,
+          "order": 11,
           "item": "237",
           "abbr": "CO2",
           "desp": "[均值]二氧化碳",
@@ -109,6 +120,7 @@
         },
         "248": {
           "fine": false,
+          "order": 12,
           "item": "248",
           "abbr": "FLOW",
           "desp": "[均值]排放流率",
@@ -117,6 +129,7 @@
         },
         "259": {
           "fine": false,
+          "order": 13,
           "item": "259",
           "abbr": "TEMP",
           "desp": "[均值]溫度",
@@ -125,6 +138,7 @@
         },
         "280": {
           "fine": false,
+          "order": 14,
           "item": "280",
           "abbr": "CMH",
           "desp": "[均值]排放流率",
@@ -133,6 +147,7 @@
         },
         "922": {
           "fine": false,
+          "order": 15,
           "item": "922",
           "abbr": "SOX",
           "desp": "二氧化硫",
@@ -141,6 +156,7 @@
         },
         "923": {
           "fine": false,
+          "order": 16,
           "item": "923",
           "abbr": "NOX",
           "desp": "氮氧化物",
@@ -149,6 +165,7 @@
         },
         "924": {
           "fine": false,
+          "order": 17,
           "item": "924",
           "abbr": "CO",
           "desp": "一氧化碳",
@@ -157,6 +174,7 @@
         },
         "925": {
           "fine": false,
+          "order": 18,
           "item": "925",
           "abbr": "TRS",
           "desp": "總還原硫",
@@ -165,6 +183,7 @@
         },
         "926": {
           "fine": false,
+          "order": 19,
           "item": "926",
           "abbr": "HCL",
           "desp": "氯化氫",
@@ -173,6 +192,7 @@
         },
         "927": {
           "fine": false,
+          "order": 20,
           "item": "927",
           "abbr": "VOC",
           "desp": "揮發性有機物",
@@ -181,6 +201,7 @@
         },
         "928": {
           "fine": false,
+          "order": 21,
           "item": "928",
           "abbr": "NMHC",
           "desp": "NMHC",
@@ -189,6 +210,7 @@
         },
         "936": {
           "fine": false,
+          "order": 22,
           "item": "936",
           "abbr": "O2",
           "desp": "氧氣",
@@ -197,6 +219,7 @@
         },
         "937": {
           "fine": false,
+          "order": 23,
           "item": "937",
           "abbr": "CO2",
           "desp": "二氧化碳",
@@ -205,6 +228,7 @@
         },
         "948": {
           "fine": false,
+          "order": 24,
           "item": "948",
           "abbr": "FLOW",
           "desp": "排放流率",
@@ -212,6 +236,7 @@
         },
         "959": {
           "fine": false,
+          "order": 25,
           "item": "959",
           "abbr": "TEMP",
           "desp": "溫度",
@@ -220,6 +245,7 @@
         },
         "980": {
           "fine": false,
+          "order": 26,
           "item": "980",
           "abbr": "CMH",
           "desp": "排放流率",
@@ -428,41 +454,31 @@
 
       var groupChart = function() {
         var $charts = $("#charts");
-        var $chartItem = $("#charts > .chart-item");
-        var group = [];
+        var $chartItem = $("#charts > .chart-item[data-chart-type='"+typeDefault+"']");
         
         $chartItem.each(function() {
-            var gid = $(this).attr("data-chart-gid");
-            if ($.inArray(gid, group) == -1) {
-              group.push(gid);
-            }
-        });
-        
-        for (index in group) {
-          var gid = group[index];
+          var gid = $(this).attr("data-chart-gid");
           var chartGroupID = "cg-" + gid;
-          var tabsContainer = "<div id='" + chartGroupID + "' class='chart-group tabs-container chart-tabs'></div>";
-          $charts.append(tabsContainer);
-  
-          var $thisTabs = $("#" + chartGroupID);
+          var $thisTabs = $("<div id='" + chartGroupID + "' class='chart-group tabs-container chart-tabs'></div>");
+          var $tabsControl = $("<ul class='tabs-control'></ul>");
+          $thisTabs.prepend($tabsControl);
+          $(this).after($thisTabs);
 
-          var tabsControl = "<ul class='tabs-control'>";
-          var activeTab = 1;
+          var activeTab;
+          for ( var i in chartTypes) {
+            ctype = chartTypes[i];
+            var $chartItem = $(".chart-item[data-chart-gid='" + gid + "'][data-chart-type='"+ctype+"']");
+            if ($chartItem.length) {
+              if (ctype == typeDefault) {
+                activeTab = parseInt(i)+1; 
+              }
+              var chartItemID = $chartItem.attr("id");  
+              $tabsControl.append("<li class='tab' data-chart-type='" + ctype + "'><a href='#" + chartItemID + "'>" + typesName[ctype] + "</a></li>");
+              $chartItem.addClass("tabs-panel")
+              $chartItem.appendTo($thisTabs);
+            }
+          }
 
-          $(".chart-item[data-chart-gid='" + gid + "']").each(function(i) {
-            var chartItemID = $(this).attr("id");  
-            var chartType = $(this).attr("data-chart-type");
-            
-            tabsControl += "<li class='tab' data-chart-type='" + chartType + "'><a href='#" + chartItemID + "'>" + typesName[chartType] + "</a></li>";
-            $(this).addClass("tabs-panel").appendTo($("#cg-" + gid));
-
-            activeTab = chartType == typeDefault ? i + 1 : activeTab;
-          });
-
-          tabsControl += "</ul>";
-
-          $thisTabs.prepend(tabsControl);
-          
           // Initialize tabslet plugin
           $thisTabs.tabslet({
             active: activeTab
@@ -484,7 +500,7 @@
             }
             */
           });
-        }
+        });
       }
 
       var renderChart = function(results, chartType){
@@ -536,7 +552,7 @@
         }
 
         // create chart
-        var data, line, $div, $h3;
+        var data, prepared = [];
         var $root = $("#charts");
         var count = 0;
 
@@ -631,11 +647,12 @@
           var chartBtnClass = exceed && fine ? "chart-report-btn" : "chart-share-btn";
           var chartBtnText = exceed && fine ? "檢舉與分享" : "分享";
           var chartBtn = exceed ? "<a class='chart-btn " + chartBtnClass + "' href='#' data-chart-id='" + chartID + "'><span class='fa fa-share'></span>" + chartBtnText + "</a>" : "";
+          var facilityName = "";
           if (lastMonitorId !== name[2] && chartType == typeDefault) {
-            chartItem += '<h3>'+ name[2] +'</h3>';
+            facilityName = name[2];
           }
           lastMonitorId = name[2];
-          var title = (chartType === typeDefault) ? "<h4>" + chartName + "</h4>" : "<strong>" + chartName + "</strong>";
+          var title = (chartType === typeDefault) ? "<h5>" + chartName + "</h5>" : "<strong>" + chartName + "</strong>";
           chartItem += title; 
           
           if(chartBtn){
@@ -643,7 +660,6 @@
           }
           chartItem += "<div id='" + chartID + "' class='" + index + " chart ct-chart' data-chart-name='" + chartName  + "' data-chart-type='" + chartType + "'></div>";
           chartItem += "</div>";
-          $root.append(chartItem);
 
           // Create a new line chart object where as first parameter we pass in a selector
           // that is resolving to our chart container element. The Second parameter
@@ -670,11 +686,51 @@
             Chartist.plugins.tooltip(),
             Chartist.plugins.ctAxisTitle(axisTitleOption)
           ];
-          new Chartist.Line("." + index, data, chartOption);
-          count++;
-          chartSum++;
-        }
 
+          var order = facilityType[name[3]]["order"];
+          if (typeof prepared[name[2]] == 'undefined') {
+            prepared[name[2]] = [];
+          }
+          if (typeof prepared[name[2]][order] == 'undefined') {
+            prepared[name[2]][order] = {};
+          }
+          prepared[name[2]][order] = {
+            "index": index,
+            "data": data,
+            "item": chartItem,
+            "type": facilityType[name[3]],
+            "chartType": chartType,
+            "facility": facilityName,
+            "option": chartOption
+          };
+        }
+        // render chart in correct order
+        var fine, added;
+        for (facility in prepared) {
+          fine = false;
+          added = 0;
+          for (order in prepared[facility]) {
+            var pre = prepared[facility][order];
+            fine = pre.type.fine;
+            if (pre.facility) {
+              $root.append("<h3>"+pre.facility+"</h3>");
+            }
+            if (fine && !added && chartType == typeDefault) {
+              $root.append("<h4>裁罰依據</h4>");
+              added = 1;
+            }
+            if (!fine && added < 2 && chartType == typeDefault) {
+              $root.append("<h4>其他監測項目</h4>");
+              added = 2;
+            }
+            $root.append(pre.item);
+            new Chartist.Line("." + pre.index, pre.data, pre.option);
+            var additionalClass = fine ? "chart-report" : "chart-normal";
+            $("."+pre.index).addClass(additionalClass);
+            chartSum++;
+            count++;
+          }
+        }
         if (!count) {
           $('#block-envdata-facility-realtime-charts .content #charts').html('<p>目前沒有任何資料可供繪製圖表。</p>');
         }
@@ -699,13 +755,13 @@
 
         if (chartAllLoad) {
           // Set chartist_load is true after gerenate all charts.
-          Drupal.settings.envdata.chartist_load = true;
           $('.colorbox-node', context).once('init-colorbox-node-processed', function () {
             $(this).colorboxNode({'launch': false});
           });
 
           // Group chart
           groupChart();
+          Drupal.settings.envdata.chartist_load = true;
 
           // Show a share preview modal when user click chart share button.
           $(".chart-btns").on("click", ".chart-btn", function(e) {
