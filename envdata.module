@@ -95,9 +95,11 @@ function envdata_add_resource($type = 'all'){
   if($type == 'chartist' || $type == 'all') {
     // chartist
     drupal_add_css($module_envdata . '/vendor/chartist/chartist.min.css');
-    drupal_add_js($module_envdata . '/vendor/chartist/chartist.min.js', array('weight' => 1));
-    drupal_add_js($module_envdata . '/vendor/chartist-plugin-threshold/chartist-plugin-threshold.js', array('weight' => 2));
-    drupal_add_js($module_envdata . '/vendor/chartist-plugin-axistitle/chartist-plugin-axistitle.min.js', array('weight' => 3));
+    drupal_add_css($module_envdata . '/vendor/chartist-plugin-tooltip/chartist-plugin-tooltip.css');
+    drupal_add_js($module_envdata . '/vendor/chartist/chartist.min.js', array_merge(array('weight' => 1), $js_option));
+    drupal_add_js($module_envdata . '/vendor/chartist-plugin-threshold/chartist-plugin-threshold.js', array_merge(array('weight' => 2), $js_option));
+    drupal_add_js($module_envdata . '/vendor/chartist-plugin-axistitle/chartist-plugin-axistitle.min.js', array_merge(array('weight' => 3), $js_option));
+    drupal_add_js($module_envdata . '/vendor/chartist-plugin-tooltip/chartist-plugin-tooltip.min.js', array_merge(array('weight' => 4), $js_option));
   }
 
   // papaparse

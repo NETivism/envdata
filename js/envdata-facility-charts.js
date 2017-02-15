@@ -331,14 +331,6 @@
             showPoint: false
           }
         },
-        /*
-        plugins: [
-          Chartist.plugins.ctThreshold({
-            threshold: 40
-          }),
-          Chartist.plugins.ctAxisTitle(axisTitleOption)
-        ]
-        */
       };
 
       var svgToPng = function(container) {
@@ -526,7 +518,7 @@
             "labels": [],
             "series": [
               { name: "threshold-line", data: thresholdVals },
-              { name: "data-line", data: dataVals }
+              { data: dataVals }
             ]
           }
 
@@ -558,7 +550,7 @@
 
             // push data to threshold line
             v[1] = v[1] == 0 ? "" : v[1];
-            thresholdVals.push(v[1]);
+            thresholdVals.push({"meta":v[1],"value":v[1]});
 
             // If threshold value more than max data 
             v[0] = parseInt(v[0]);
@@ -632,7 +624,8 @@
           if (typeof axTitle != "undefined") axisTitleOption.axisX.axisTitle = axTitle;
           
           chartOption.plugins = [
-            //Chartist.plugins.ctThreshold({threshold: 40}),
+            // Chartist.plugins.ctThreshold({threshold: 40}),
+            Chartist.plugins.tooltip(),
             Chartist.plugins.ctAxisTitle(axisTitleOption)
           ];
           new Chartist.Line("." + index, data, chartOption);
