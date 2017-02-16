@@ -128,6 +128,9 @@ line.ct-point:hover {
   width: 85%;
   max-width: 600px;
 }
+#chart-share-modal h5 {
+  text-align: center;
+}
 #chart-share-modal .facility-name,
 #chart-share-modal .chart-name {
   margin-right: 160px;

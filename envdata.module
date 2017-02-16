@@ -82,6 +82,7 @@ function envdata_add_resource($type = 'all'){
   $module_envdata   = drupal_get_path('module', 'envdata');
   $js_option = array(
     'preprocess' => FALSE,
+    'group' => 101,
   );
 
   if($type == 'chartist' || $type == 'all') {

@@ -42,7 +42,7 @@ function envdata_prepare_chart($vars) {
     if($pass) {
       envdata_add_resource();
       drupal_add_js(array('envdata' => $settings), 'setting');
-      return '<div id="charts"></div>';
+      return '<div class="chart-intro">即時監測是在煙囪上裝設空氣污染物量測儀器，24小時不中斷地量測煙囪污染物排放狀況，如果監測數值出現超標，工廠無法有推托的藉口。按照法規，監測項目中，僅有二氧化硫、氮氧化物、一氧化碳、氯化氫的小時均值、及不透光率可作為裁罰依據，其餘的監測項目則是作為換算污染物濃度基準使用。</div><div id="charts"></div>';
     }
   }
 

@@ -70,7 +70,7 @@
           "item": "911",
           "abbr": "OPC",
           "desp": "不透光率",
-          "help": "粒狀污染物",
+          "help": "80",
           "unit": "%"
         },
         "211": {
@@ -79,7 +79,7 @@
           "item": "211",
           "abbr": "OPC",
           "desp": "[均值]不透光率",
-          "help": "粒狀污染物",
+          "help": "80",
           "unit": "%"
         },
         "227": {
@@ -124,7 +124,7 @@
           "item": "248",
           "abbr": "FLOW",
           "desp": "[均值]排放流率",
-          "help": "",
+          "help": "81",
           "unit": "Nm3/hr"
         },
         "259": {
@@ -492,6 +492,8 @@
             $(this).find('.ct-chart:visible').each(function(e, tab){
               tab.__chartist__.update();
             });
+            var ctype = $thisTabs.find('li.active').attr('data-chart-type');
+            ga('send', 'event', 'chart', 'tab-'+ctype, $thisTabs.attr('id'));
             /*
             if (document.createEvent) { // W3C
               window.dispatchEvent(new Event('resize'));
@@ -667,28 +669,20 @@
           // Create a new line chart object where as first parameter we pass in a selector
           // that is resolving to our chart container element. The Second parameter
           // is the actual data object.
-          axisTitleOption.axisY.axisTitle = facilityType[name[3]]["unit"];
+          var axisYTitle = facilityType[name[3]]["unit"];
 
-          var axTitle;
+          var axisXTitle;
 
           switch (chartType) {
             case "1day":
               var ds = dateStart.split("-");
-              axTitle = "從 " + formatDate(dateFromYmd(ds[0]), "/") + " " + ds[1] + ":00 起的 24 小時";
+              axisXTitle = "從 " + formatDate(dateFromYmd(ds[0]), "/") + " " + ds[1] + ":00 起的 24 小時";
               break;
 
             case "30day":
-              axTitle = "從 " + formatDate(dateFromYmd(dateStart), "/") + " 起的 30 天";
+              axisXTitle = "從 " + formatDate(dateFromYmd(dateStart), "/") + " 起的 30 天";
               break;
           } 
-
-          if (typeof axTitle != "undefined") axisTitleOption.axisX.axisTitle = axTitle;
-          
-          chartOption.plugins = [
-            // Chartist.plugins.ctThreshold({threshold: 40}),
-            Chartist.plugins.tooltip(),
-            Chartist.plugins.ctAxisTitle(axisTitleOption)
-          ];
 
           var order = facilityType[name[3]]["order"];
           if (typeof prepared[name[2]] == 'undefined') {
@@ -704,6 +698,7 @@
             "type": facilityType[name[3]],
             "chartType": chartType,
             "facility": facilityName,
+            "axis": {"x":axisXTitle, "y":axisYTitle},
             "option": chartOption
           };
         }
@@ -716,7 +711,7 @@
             var pre = prepared[facility][order];
             fine = pre.type.fine;
             if (pre.facility) {
-              $root.append("<h3>"+pre.facility+"</h3>");
+              $root.append("<h3>"+pre.facility+"煙道</h3>");
             }
             if (fine && !added && chartType == typeDefault) {
               $root.append('<div class="section-report section-report-des"><h4>裁罰依據</h4><p>按照法規，排放超標可開罰的標準是氣狀污染物（如二氧化硫、氮氧化物、一氧化碳、氯化氫）的小時均值，以及粒狀污染物6分鐘一筆的即時監測值</p></div>');
@@ -727,6 +722,14 @@
               added = 2;
             }
             $root.append(pre.item);
+            axisTitleOption.axisX.axisTitle = pre.axis.x;
+            axisTitleOption.axisY.axisTitle = pre.axis.y;
+            pre.option.plugins = [
+              // Chartist.plugins.ctThreshold({threshold: 40}),
+              Chartist.plugins.tooltip(),
+              Chartist.plugins.ctAxisTitle(axisTitleOption)
+            ];
+
             new Chartist.Line("." + pre.index, pre.data, pre.option);
             var additionalClass = fine ? "chart-report" : "chart-normal";
             $("."+pre.index).addClass(additionalClass);
@@ -790,6 +793,12 @@
             var facilityName = $(".views-field-facility-name .field-content").text();
             var registrationNo = fileNameVal.split('_')[1];
             // var pngDataVal   = svgToPng(chartID);
+            if (report) {
+              ga('send', 'event', 'chart', 'share', 'report-'+chartID);
+            }
+            else {
+              ga('send', 'event', 'chart', 'share', 'share-'+chartID);
+            }
             
             var postData = {
             //  imgData: pngDataVal
@@ -806,9 +815,7 @@
                 $parent.find('img.loading').remove();
 
                 var shareText = "<h5>加入監督行動，讓污染無所遁形！</h5>";
-                shareText += "<p>看到工廠排放廢氣、廢水，除了憤怒，不知道能有什麼行動，也不覺得能改變什麼嗎？綠色公民行動聯盟邀你一起加入「透明足跡」的監督行動！</p>";
-                shareText += "<p>綠盟彙整了企業污染排放資料，在「透明足跡」網站看到即時監測數據出現「超標」警訊，只需按下「分享」，就可把企業污染訊息傳出去，讓污染環境的企業現身！按下「立即檢舉」，會將超標資料通報給綠盟，也可進一步填寫陳情單向環保署檢舉。</p>";
-                shareText += "<p>過去我們把監督的權力與責任都交給政府，現在我們要將一部分的權力拿回來，唯有全民一起參與監督，才能打破環境治理的困境，「透明足跡」監督政府也監督企業，讓政府落實管制，讓企業負起社會責任。請你一起加入監督行動，讓污染無所遁形！</p>";
+                shareText += "<p>面對企業污染源的超標排放，我們不只要檢舉究責，還要讓更多人知道。請大家持續關注與分享，讓污染的幽暗角落攤在陽光下！</p>";
 
                 // Prepare share modal HTML.
                 var shareModal = "<div class='modal' id='chart-share-modal'>";
@@ -834,6 +841,10 @@
                   $shareModal.remove();
                 });
 
+                $("#chart-share-modal").on("click", ".report-btn", function(){
+                  ga('send', 'event', 'chart', 'share-report', facilityName+'-'+chartName.replace(/<(?:.|\n)*?>/gm, ''));
+                });
+
                 // Popup a facebook share dialog when user click facebook share button in share modal. 
                 $("#chart-share-modal").on("click", ".fb-share-btn", function(e) {
                   e.preventDefault();
@@ -844,8 +855,9 @@
                   var dName    = "[即時排放監測] " + facilityName + " - " + chartDate;
                   var dLink    = window.location.href;
                   var dPic     = chartImgURL;
-                  var dDesc    = chartName;
+                  var dDesc    = chartName.replace(/<(?:.|\n)*?>/gm, '');
                   var dCaption = "透明足跡 thaubing.gcaa.org.tw";
+                  ga('send', 'event', 'chart', 'share-fb', facilityName+'-'+dDesc);
 
                   var dSettings = {
                     method: dMethod,
