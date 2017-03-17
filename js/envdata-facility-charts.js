@@ -372,7 +372,7 @@
         },
         chartPadding: {
           top: 15,
-          right: 15,
+          right: 50,
           bottom: 30,
           left: 10
         },
@@ -579,7 +579,7 @@
           data = {
             "labels": [],
             "series": [
-              { name: "threshold-line", data: thresholdVals },
+              { className: 'ct-series ct-series-a ct-series-threshold', name: "threshold-line", data: thresholdVals },
               { data: dataVals }
             ]
           }
@@ -730,7 +730,35 @@
               Chartist.plugins.ctAxisTitle(axisTitleOption)
             ];
 
-            new Chartist.Line("." + pre.index, pre.data, pre.option);
+            var chart = new Chartist.Line("." + pre.index, pre.data, pre.option);
+            chart.on('draw', function(data) {
+              if (data.type == 'line' && data.series.name == 'threshold-line') {
+                console.log(data);
+
+                if (typeof data.values["0"] != 'undefined') {
+                  var axisX = data.axisX.axisLength + data.axisX.gridOffset + 15;
+                  var axisY = data.axisY.axisLength - data.axisY.gridOffset - 5;
+                  var val = data.values["0"].y;
+                  
+                  var caption = new Chartist.Svg('g');
+                  caption.addClass('ct-threshold-caption');
+
+                  var captionLabel = new Chartist.Svg('text', {
+                        x: axisX,
+                        y: axisY
+                      }, 'ct-threshold-caption-label', caption);
+                  captionLabel.text('標準值');
+                  
+                  var captionValue = new Chartist.Svg('text', {
+                        x: axisX,
+                        y: axisY + 15
+                      }, 'ct-threshold-caption-value', caption);
+                  captionValue.text(val);
+                  
+                  data.group.append(caption);
+                }
+              }
+            });
             var additionalClass = fine ? "chart-report" : "chart-normal";
             $("."+pre.index).addClass(additionalClass);
             chartSum++;

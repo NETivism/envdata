@@ -15,6 +15,20 @@ line.ct-point:hover {
   opacity: 0.75;
   cursor: pointer;
 }
+.ct-series-threshold .ct-point,
+.ct-series-threshold .ct-point:hover {
+  opacity: 0;
+  cursor: auto;
+}
+.ct-threshold-caption-label {
+  font-size: 12px;
+}
+.ct-threshold-caption-value {
+  font-size: 12px;
+}
+.admin-menu .ct-threshold-caption {
+  fill: red;
+}
 .chartist-tooltip {
   position: absolute;
   display: inline-block;
