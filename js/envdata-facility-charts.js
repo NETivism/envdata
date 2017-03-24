@@ -612,7 +612,7 @@
 
             // push data to threshold line
             v[1] = v[1] == 0 ? "" : v[1];
-            thresholdVals.push({"meta":v[1],"value":v[1]});
+            thresholdVals.push(v[1]);
 
             // If threshold value more than max data 
             v[0] = parseInt(v[0]);
@@ -737,7 +737,7 @@
 
                 if (typeof data.values["0"] != 'undefined') {
                   var axisX = data.axisX.axisLength + data.axisX.gridOffset + 15;
-                  var axisY = data.axisY.axisLength - data.axisY.gridOffset - 5;
+                  var axisY = data.axisY.axisLength == data.path.pathElements["0"].y ? data.path.pathElements["0"].y - 10 : data.path.pathElements["0"].y;
                   var val = data.values["0"].y;
                   
                   var caption = new Chartist.Svg('g');
