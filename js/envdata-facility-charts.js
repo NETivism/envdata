@@ -10,7 +10,7 @@
       var url          = Drupal.settings.envdata.dataURL;      
       var chartTypes   = Drupal.settings.envdata.types;
       var typeDefault  = '30day';
-      var dataSum      = Drupal.settings.envdata.types.length;
+      var dataSum      = Object.keys(chartTypes).length;
       var dataLoadNum  = 0;
       var dataAllLoad  = false;
       var chartSum     = 0;
@@ -254,11 +254,6 @@
         }
       };
 
-      var typesName = {
-        "1day" : "24小時",
-        "30day" : "30天"
-      }
-
       var sortObj = function (obj, order) {
         // Based on https://gist.github.com/CFJSGeek/5550678
         var key, i, 
@@ -465,15 +460,16 @@
           $(this).after($thisTabs);
 
           var activeTab;
-          for ( var i in chartTypes) {
-            ctype = chartTypes[i];
+          for (var ctype in chartTypes) {
+            var i = Object.keys(chartTypes).indexOf(ctype);
             var $chartItem = $(".chart-item[data-chart-gid='" + gid + "'][data-chart-type='"+ctype+"']");
+
             if ($chartItem.length) {
               if (ctype == typeDefault) {
                 activeTab = parseInt(i)+1; 
               }
               var chartItemID = $chartItem.attr("id");  
-              $tabsControl.append("<li class='tab' data-chart-type='" + ctype + "'><a href='#" + chartItemID + "'>" + typesName[ctype] + "</a></li>");
+              $tabsControl.append("<li class='tab' data-chart-type='" + ctype + "'><a href='#" + chartItemID + "'>" + chartTypes[ctype] + "</a></li>");
               $chartItem.addClass("tabs-panel")
               if($chartItem.find('.chart-report').length){
                 $thisTabs.addClass('section-report');
@@ -733,7 +729,7 @@
             var chart = new Chartist.Line("." + pre.index, pre.data, pre.option);
             chart.on('draw', function(data) {
               if (data.type == 'line' && data.series.name == 'threshold-line') {
-                console.log(data);
+                // console.log(data);
 
                 if (typeof data.values["0"] != 'undefined') {
                   var axisX = data.axisX.axisLength + data.axisX.gridOffset + 15;
@@ -815,7 +811,7 @@
             var $chart       = $parent.next(".ct-chart");
             var chartID      = $chart.attr("id");
             var chartType    = $chart.attr("data-chart-type");
-            var chartName    = $chart.attr("data-chart-name") + "（" + typesName[chartType] + "）";
+            var chartName    = $chart.attr("data-chart-name") + "（" + chartTypes[chartType] + "）";
             var chartDate    = [year, month, day].join("/");
             var fileNameVal  = chartID.replace(/^chart-T/, '')+'_'+ymd;
             var facilityName = $(".views-field-facility-name .field-content").text();
@@ -906,8 +902,8 @@
       }, 500);
 
       // main function
-      for(var key in chartTypes) {
-        var dataURL = url.replace('{type}', chartTypes[key]);
+      for(var ctype in chartTypes) {
+        var dataURL = url.replace('{type}', ctype);
         (function(url, type){
           Papa.parse(url, {
             download: true,
@@ -916,7 +912,7 @@
               dataLoadNum++;
             } 
           });
-        })(dataURL, chartTypes[key]);
+        })(dataURL, ctype);
       }
     }); // for run only once
     },
