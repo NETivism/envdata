@@ -329,7 +329,7 @@
                 hour = '0' + datestr;
               }
               var threshold = o[1] || 0;
-              robj[hour] = [0, threshold];
+              robj["t"+hour] = [0, threshold];
             }
           }
 
