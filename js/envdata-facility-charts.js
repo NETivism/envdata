@@ -18,6 +18,9 @@
       var chartAllLoad = false;
       var loadingSvg   = Drupal.settings.envdata.loading;
 
+      var dataDetailDay = {};
+      var detailDayLoad = false;
+
       var facilityType = {
         "222": {
           "fine": true,
@@ -504,6 +507,84 @@
         });
       }
 
+      var getDetailDay = function(results, chartType) {
+        var values = {};
+        var i, indexo, row, index, value, time;
+        var filter = Drupal.settings.envdata.filter;
+
+        // loop
+        // grouping by registration_no,facility_no,type
+        for(i = 0; i < results.data.length; i++){
+          row = results.data[i];
+          if(row.length < 5) continue;
+          // 1day_registrationNo_facilityNo_type
+          index = chartType+'_'+row[0] + "_" + row[1] + "_" + row[2];
+
+          // apply filter parameter from drupal setting
+          var include = 1;
+          if(filter){
+            var regex = new RegExp(filter);
+            if(!regex.test(index)){
+              include = 0;
+            }
+          }
+
+          if(include) {
+            index = 'T'+index;
+            value = row[3];
+            time = row[7].split("-");
+
+            // new factory
+            if(typeof values[index] === "undefined"){
+              values[index] = [];
+            }
+
+            // new hour
+            if (typeof values[index][row[5]] == "undefined") {
+              values[index][row[5]] = [];
+            }
+            values[index][row[5]][time[1]] = value;
+
+            indexo = index;
+          }
+        }
+
+        for (index in values) {
+          values[index] = sortObj(values[index]);
+          values[index] = missingHours(values[index]);
+        }
+
+        return values;
+      }
+
+      var renderDetailData = function(data, chartType, threshold) {
+        var output = "";
+        var chartType = typeof chartType !== "undefined" ? chartType : "1day";
+
+        if (data) {
+          threshold = parseFloat(threshold);
+          output = "<ul class='data-detail-list'>";
+
+          for (var index in data) {
+            var time = index;
+            var value = parseFloat(data[index]);
+
+            if (value > threshold) {
+              output += "<li class='is-exceed'>";
+            }
+            else {
+              output += "<li>";
+            }
+
+            output += "<span class='data-time'>" + time + "</span><span class='data-value'>" + value + "</span></li>";
+          }
+
+          output += "</ul>";
+        }
+
+        return output;
+      }
+
       var renderChart = function(results, chartType){
         // two level object
         var values = {};
@@ -603,12 +684,23 @@
 
             var v = values[index][k];
 
-            // push data to data line
-            dataVals.push(v[0]);
-
             // push data to threshold line
             v[1] = v[1] == 0 ? "" : v[1];
             thresholdVals.push(v[1]);
+
+            // push data to data line
+            if (chartType == "1day") {
+              if (detailDayLoad) {
+                var detailData = renderDetailData(dataDetailDay[index][k], chartType, v[1]);
+                dataVals.push({meta: detailData, value: v[0]});
+              }
+              else {
+                dataVals.push(v[0]);
+              }
+            }
+            else {
+              dataVals.push(v[0]);
+            }
 
             // If threshold value more than max data 
             v[0] = parseInt(v[0]);
@@ -698,6 +790,7 @@
             "option": chartOption
           };
         }
+
         // render chart in correct order
         var fine, added;
         for (facility in prepared) {
@@ -722,7 +815,20 @@
             axisTitleOption.axisY.axisTitle = pre.axis.y;
             pre.option.plugins = [
               // Chartist.plugins.ctThreshold({threshold: 40}),
-              Chartist.plugins.tooltip(),
+              Chartist.plugins.tooltip({
+                tooltipFnc: function (meta, value, event) {
+                  var output = '';
+
+                  if (meta) {
+                    meta = $("<textarea/>").html(meta).text(); // decode meta
+                    output += "<div class='chartist-tooltip-meta'>" + meta + "</div>";
+                  }
+
+                  output += "<div class='chartist-tooltip-value'>" + value + "</div>";
+                  
+                  return output;
+                }
+              }),
               Chartist.plugins.ctAxisTitle(axisTitleOption)
             ];
 
@@ -908,7 +1014,33 @@
           Papa.parse(url, {
             download: true,
             complete: function(results){
-              renderChart(results, type);
+              if (type == '1day') {
+                if (!detailDayLoad) {
+                  var detailDataURL = url.replace('1day', 'detail1day');
+
+                  $.ajax({
+                      url: detailDataURL,
+                      type:'HEAD',
+                      error: function() {
+                        renderChart(results, type);
+                      },
+                      success: function() {
+                        Papa.parse(detailDataURL, {
+                          download: true,
+                          complete: function(results){
+                            detailDayLoad = true;
+                            dataDetailDay = getDetailDay(results, type);
+                            renderChart(results, type);
+                          }
+                        });
+                      }
+                  });
+                }
+              }
+              else {
+                renderChart(results, type);
+              }
+
               dataLoadNum++;
             } 
           });
