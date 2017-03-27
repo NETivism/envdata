@@ -562,24 +562,29 @@
         var chartType = typeof chartType !== "undefined" ? chartType : "1day";
 
         if (data) {
-          threshold = parseFloat(threshold);
-          output = "<ul class='data-detail-list'>";
+          if (!("0" in data)) {
+            threshold = parseFloat(threshold);
+            output = "<ul class='data-detail-list'>";
 
-          for (var index in data) {
-            var time = index;
-            var value = parseFloat(data[index]);
+            for (var index in data) {
+              var time = index;
+              var value = parseFloat(data[index]);
 
-            if (value > threshold) {
-              output += "<li class='is-exceed'>";
+              if (value > threshold) {
+                output += "<li class='is-exceed'>";
+              }
+              else {
+                output += "<li>";
+              }
+
+              output += "<span class='data-time'>" + time + "</span><span class='data-value'>" + value + "</span></li>";
             }
-            else {
-              output += "<li>";
-            }
 
-            output += "<span class='data-time'>" + time + "</span><span class='data-value'>" + value + "</span></li>";
+            output += "</ul>";
           }
-
-          output += "</ul>";
+          else {
+            output = "0";
+          }
         }
 
         return output;
