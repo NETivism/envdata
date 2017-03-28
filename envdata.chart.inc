@@ -39,6 +39,16 @@ function envdata_prepare_chart($vars) {
       $settings['types'] = _envdata_chart_types();
     }
 
+    $types_detail = _envdata_chart_types_detail();
+    foreach ($types_detail as $k => $t) {
+      $filename = DRUPAL_ROOT . str_replace('{type}', $k, $path);
+      
+      if (!file_exists($filename)) {
+        unset($types_detail[$k]);
+      }
+    }
+    $settings['types_detail'] = $types_detail;
+
     if($pass) {
       envdata_add_resource();
       drupal_add_js(array('envdata' => $settings), 'setting');
@@ -155,5 +165,11 @@ function _envdata_chart_types(){
   return array(
     '1day' => '24小時', 
     '30day' => '30天',
+  );
+}
+
+function _envdata_chart_types_detail(){
+  return array(
+    'detail1day' => '24小時',
   );
 }

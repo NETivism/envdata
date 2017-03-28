@@ -7,19 +7,19 @@
     $("#charts:not(.is-processed)", context).once('envdata', function(){
       $("#charts").addClass('is-processed');
 
-      var url          = Drupal.settings.envdata.dataURL;      
-      var chartTypes   = Drupal.settings.envdata.types;
-      var typeDefault  = '30day';
-      var dataSum      = Object.keys(chartTypes).length;
-      var dataLoadNum  = 0;
-      var dataAllLoad  = false;
-      var chartSum     = 0;
-      var chartLoadNum = 0;
-      var chartAllLoad = false;
-      var loadingSvg   = Drupal.settings.envdata.loading;
+      var url              = Drupal.settings.envdata.dataURL;
+      var chartTypes       = Drupal.settings.envdata.types;
+      var chartTypesDetail = Drupal.settings.envdata.types_detail;
+      var typeDefault      = '30day';
+      var dataSum          = Object.keys(chartTypes).length + Object.keys(chartTypesDetail).length;
+      var dataLoadNum      = 0;
+      var dataAllLoad      = false;
+      var chartSum         = 0;
+      var chartLoadNum     = 0;
+      var chartAllLoad     = false;
+      var loadingSvg       = Drupal.settings.envdata.loading;
 
       var dataDetailDay = {};
-      var detailDayLoad = false;
 
       var facilityType = {
         "222": {
@@ -695,7 +695,7 @@
 
             // push data to data line
             if (chartType == "1day") {
-              if (detailDayLoad) {
+              if (chartTypesDetail["detail1day"]) {
                 var detailData = renderDetailData(dataDetailDay[index][k], chartType, v[1]);
                 dataVals.push({meta: detailData, value: v[0]});
               }
@@ -1020,26 +1020,20 @@
             download: true,
             complete: function(results){
               if (type == '1day') {
-                if (!detailDayLoad) {
+                if (chartTypesDetail['detail1day']) {
                   var detailDataURL = url.replace('1day', 'detail1day');
 
-                  $.ajax({
-                      url: detailDataURL,
-                      type:'HEAD',
-                      error: function() {
-                        renderChart(results, type);
-                      },
-                      success: function() {
-                        Papa.parse(detailDataURL, {
-                          download: true,
-                          complete: function(results){
-                            detailDayLoad = true;
-                            dataDetailDay = getDetailDay(results, type);
-                            renderChart(results, type);
-                          }
-                        });
-                      }
+                  Papa.parse(detailDataURL, {
+                    download: true,
+                    complete: function(results){
+                      dataDetailDay = getDetailDay(results, type);
+                      renderChart(results, type);
+                      dataLoadNum++;
+                    }
                   });
+                }
+                else {    
+                  renderChart(results, type);
                 }
               }
               else {
