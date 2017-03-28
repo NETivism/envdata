@@ -165,6 +165,7 @@ function _envdata_chart_types(){
   return array(
     '1day' => '24小時', 
     '30day' => '30天',
+    '6month' => '半年',
   );
 }
 

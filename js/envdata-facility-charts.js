@@ -312,6 +312,22 @@
         return [y, m, d].join(separator);
       }
 
+      // reference: http://stackoverflow.com/questions/16590500/javascript-calculate-date-from-week-number
+      var getDateOfISOWeek = function(w, y) {
+        var simple = new Date(y, 0, 1 + (w - 1) * 7);
+        var dow = simple.getDay();
+        var ISOweekStart = simple;
+
+        if (dow <= 4) {
+          ISOweekStart.setDate(simple.getDate() - simple.getDay() + 1);
+        }
+        else {
+          ISOweekStart.setDate(simple.getDate() + 8 - simple.getDay());
+        }
+
+        return ISOweekStart;
+      }
+
       var missingHours = function(obj) {
         var robj = {}, timestamp;
         for(var key in obj){
@@ -337,6 +353,63 @@
           timestamp = date.getTime();
           robj["t"+dtmp[4]] = o;
         }
+        return robj;
+      }
+
+      var missingWeeks = function(obj) {
+        var robj      = {};
+        var max       = 53;
+        var min       = 0;
+        var half      = 27;
+        var size      = Object.keys(obj).length;
+        var begin     = Object.keys(obj)[0];
+        var end       = Object.keys(obj)[size - 1];
+        var firstYear = parseInt(begin.split("-")[0]);
+        var lastYear  = parseInt(end.split("-")[0]);
+        var firstWeek = parseInt(begin.split("-")[1]);
+        var lastWeek  = parseInt(end.split("-")[1]);
+        var sameYear  = firstYear == lastYear ? true : false;
+        
+        var firstHalf, secondHalf, total;
+        
+        if (sameYear) {
+          total = lastWeek - firstWeek + 1;
+        }
+        else {
+          firstHalf = max - firstWeek + 1;
+          secondHalf = lastWeek + 1;
+          total = firstHalf + secondHalf;
+        }
+
+        var threshold = parseInt(obj[begin][1]) || 0;
+        var currentWeek = firstWeek;
+        var currentYear = firstYear;
+        var key = begin;
+        
+        for(var i = 0; i < total; i++) {
+          if (i > 0) {
+            currentWeek++;
+
+            if (currentWeek > max) {
+              currentWeek = 0;
+              currentYear++;
+            }
+          
+            key = currentWeek < 10 ? currentYear + "-0" + currentWeek : currentYear + "-" + currentWeek;
+          }
+
+          var label = i + 1;
+          robj[key] = [];
+          
+          if (obj[key]) {
+            robj[key] = obj[key];
+            robj[key].push(label);
+          }
+          else {
+            robj[key] = [0, threshold, label];
+          }
+        }
+        
         return robj;
       }
 
@@ -655,6 +728,10 @@
             values[index] = missingHours(values[index]);
           }
 
+          if (chartType == '6month') {
+            values[index] = missingWeeks(values[index]);
+          }
+
           var dataVals = [];
           var thresholdVals = [];
 
@@ -684,6 +761,11 @@
               case "30day":
                 var day = k.substr(6, 2);
                 data.labels.push(day);
+                break;
+
+              case "6month":
+                var week = i + 1;
+                data.labels.push(week);
                 break;
             } 
 
@@ -774,6 +856,11 @@
 
             case "30day":
               axisXTitle = "從 " + formatDate(dateFromYmd(dateStart), "/") + " 起的 30 天";
+              break;
+
+            case "6month":
+              var ds = dateStart.split("-");
+              axisXTitle = "從 " + formatDate(getDateOfISOWeek(ds[1], ds[0]), "/") + " 起的半年（單位：週）";
               break;
           } 
 
