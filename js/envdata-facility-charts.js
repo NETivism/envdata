@@ -926,9 +926,6 @@
 
             var chart = new Chartist.Line("." + pre.index, pre.data, pre.option);
             chart.on('draw', function(data) {
-              if (data.type == 'line') {
-                console.log(data);
-              }
               if (data.type == 'line' && data.series.name == 'threshold-line') {
                 // console.log(data);
 
