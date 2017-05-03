@@ -7,16 +7,19 @@
     $("#charts:not(.is-processed)", context).once('envdata', function(){
       $("#charts").addClass('is-processed');
 
-      var url          = Drupal.settings.envdata.dataURL;      
-      var chartTypes   = Drupal.settings.envdata.types;
-      var typeDefault  = '30day';
-      var dataSum      = Drupal.settings.envdata.types.length;
-      var dataLoadNum  = 0;
-      var dataAllLoad  = false;
-      var chartSum     = 0;
-      var chartLoadNum = 0;
-      var chartAllLoad = false;
-      var loadingSvg   = Drupal.settings.envdata.loading;
+      var url              = Drupal.settings.envdata.dataURL;
+      var chartTypes       = Drupal.settings.envdata.types;
+      var chartTypesDetail = Drupal.settings.envdata.types_detail;
+      var typeDefault      = '30day';
+      var dataSum          = Object.keys(chartTypes).length + Object.keys(chartTypesDetail).length;
+      var dataLoadNum      = 0;
+      var dataAllLoad      = false;
+      var chartSum         = 0;
+      var chartLoadNum     = 0;
+      var chartAllLoad     = false;
+      var loadingSvg       = Drupal.settings.envdata.loading;
+
+      var dataDetailDay = {};
 
       var facilityType = {
         "222": {
@@ -254,11 +257,6 @@
         }
       };
 
-      var typesName = {
-        "1day" : "24小時",
-        "30day" : "30天"
-      }
-
       var sortObj = function (obj, order) {
         // Based on https://gist.github.com/CFJSGeek/5550678
         var key, i, 
@@ -314,6 +312,22 @@
         return [y, m, d].join(separator);
       }
 
+      // reference: http://stackoverflow.com/questions/16590500/javascript-calculate-date-from-week-number
+      var getDateOfISOWeek = function(w, y) {
+        var simple = new Date(y, 0, 1 + (w - 1) * 7);
+        var dow = simple.getDay();
+        var ISOweekStart = simple;
+
+        if (dow <= 4) {
+          ISOweekStart.setDate(simple.getDate() - simple.getDay() + 1);
+        }
+        else {
+          ISOweekStart.setDate(simple.getDate() + 8 - simple.getDay());
+        }
+
+        return ISOweekStart;
+      }
+
       var missingHours = function(obj) {
         var robj = {}, timestamp;
         for(var key in obj){
@@ -331,7 +345,7 @@
                 hour = '0' + datestr;
               }
               var threshold = o[1] || 0;
-              robj[hour] = [0, threshold];
+              robj["t"+hour] = [0, threshold];
             }
           }
 
@@ -339,6 +353,63 @@
           timestamp = date.getTime();
           robj["t"+dtmp[4]] = o;
         }
+        return robj;
+      }
+
+      var missingWeeks = function(obj) {
+        var robj      = {};
+        var max       = 53;
+        var min       = 0;
+        var half      = 27;
+        var size      = Object.keys(obj).length;
+        var begin     = Object.keys(obj)[0];
+        var end       = Object.keys(obj)[size - 1];
+        var firstYear = parseInt(begin.split("-")[0]);
+        var lastYear  = parseInt(end.split("-")[0]);
+        var firstWeek = parseInt(begin.split("-")[1]);
+        var lastWeek  = parseInt(end.split("-")[1]);
+        var sameYear  = firstYear == lastYear ? true : false;
+        
+        var firstHalf, secondHalf, total;
+        
+        if (sameYear) {
+          total = lastWeek - firstWeek + 1;
+        }
+        else {
+          firstHalf = max - firstWeek + 1;
+          secondHalf = lastWeek + 1;
+          total = firstHalf + secondHalf;
+        }
+
+        var threshold = parseInt(obj[begin][1]) || 0;
+        var currentWeek = firstWeek;
+        var currentYear = firstYear;
+        var key = begin;
+        
+        for(var i = 0; i < total; i++) {
+          if (i > 0) {
+            currentWeek++;
+
+            if (currentWeek > max) {
+              currentWeek = 0;
+              currentYear++;
+            }
+          
+            key = currentWeek < 10 ? currentYear + "-0" + currentWeek : currentYear + "-" + currentWeek;
+          }
+
+          var label = i + 1;
+          robj[key] = [];
+          
+          if (obj[key]) {
+            robj[key] = obj[key];
+            robj[key].push(label);
+          }
+          else {
+            robj[key] = [0, threshold, label];
+          }
+        }
+        
         return robj;
       }
 
@@ -372,7 +443,7 @@
         },
         chartPadding: {
           top: 15,
-          right: 15,
+          right: 50,
           bottom: 30,
           left: 10
         },
@@ -465,15 +536,16 @@
           $(this).after($thisTabs);
 
           var activeTab;
-          for ( var i in chartTypes) {
-            ctype = chartTypes[i];
+          for (var ctype in chartTypes) {
+            var i = Object.keys(chartTypes).indexOf(ctype);
             var $chartItem = $(".chart-item[data-chart-gid='" + gid + "'][data-chart-type='"+ctype+"']");
+
             if ($chartItem.length) {
               if (ctype == typeDefault) {
                 activeTab = parseInt(i)+1; 
               }
               var chartItemID = $chartItem.attr("id");  
-              $tabsControl.append("<li class='tab' data-chart-type='" + ctype + "'><a href='#" + chartItemID + "'>" + typesName[ctype] + "</a></li>");
+              $tabsControl.append("<li class='tab' data-chart-type='" + ctype + "'><a href='#" + chartItemID + "'>" + chartTypes[ctype] + "</a></li>");
               $chartItem.addClass("tabs-panel")
               if($chartItem.find('.chart-report').length){
                 $thisTabs.addClass('section-report');
@@ -506,6 +578,89 @@
             */
           });
         });
+      }
+
+      var getDetailDay = function(results, chartType) {
+        var values = {};
+        var i, indexo, row, index, value, time;
+        var filter = Drupal.settings.envdata.filter;
+
+        // loop
+        // grouping by registration_no,facility_no,type
+        for(i = 0; i < results.data.length; i++){
+          row = results.data[i];
+          if(row.length < 5) continue;
+          // 1day_registrationNo_facilityNo_type
+          index = chartType+'_'+row[0] + "_" + row[1] + "_" + row[2];
+
+          // apply filter parameter from drupal setting
+          var include = 1;
+          if(filter){
+            var regex = new RegExp(filter);
+            if(!regex.test(index)){
+              include = 0;
+            }
+          }
+
+          if(include) {
+            index = 'T'+index;
+            value = row[3];
+            time = row[7].split("-");
+
+            // new factory
+            if(typeof values[index] === "undefined"){
+              values[index] = [];
+            }
+
+            // new hour
+            if (typeof values[index][row[5]] == "undefined") {
+              values[index][row[5]] = [];
+            }
+            values[index][row[5]][time[1]] = value;
+
+            indexo = index;
+          }
+        }
+
+        for (index in values) {
+          values[index] = sortObj(values[index]);
+          values[index] = missingHours(values[index]);
+        }
+
+        return values;
+      }
+
+      var renderDetailData = function(data, chartType, threshold) {
+        var output = "";
+        var chartType = typeof chartType !== "undefined" ? chartType : "1day";
+
+        if (data) {
+          if (!("0" in data)) {
+            threshold = parseFloat(threshold);
+            output = "<ul class='data-detail-list'>";
+
+            for (var index in data) {
+              var time = index;
+              var value = parseFloat(data[index]);
+
+              if (value > threshold) {
+                output += "<li class='is-exceed'>";
+              }
+              else {
+                output += "<li>";
+              }
+
+              output += "<span class='data-time'>" + time + "</span><span class='data-value'>" + value + "</span></li>";
+            }
+
+            output += "</ul>";
+          }
+          else {
+            output = "0";
+          }
+        }
+
+        return output;
       }
 
       var renderChart = function(results, chartType){
@@ -573,13 +728,17 @@
             values[index] = missingHours(values[index]);
           }
 
+          if (chartType == '6month') {
+            values[index] = missingWeeks(values[index]);
+          }
+
           var dataVals = [];
           var thresholdVals = [];
 
           data = {
             "labels": [],
             "series": [
-              { name: "threshold-line", data: thresholdVals },
+              { className: 'ct-series ct-series-a ct-series-threshold', name: "threshold-line", data: thresholdVals },
               { data: dataVals }
             ]
           }
@@ -603,16 +762,32 @@
                 var day = k.substr(6, 2);
                 data.labels.push(day);
                 break;
+
+              case "6month":
+                var week = i + 1;
+                data.labels.push(week);
+                break;
             } 
 
             var v = values[index][k];
 
-            // push data to data line
-            dataVals.push(v[0]);
-
             // push data to threshold line
             v[1] = v[1] == 0 ? "" : v[1];
-            thresholdVals.push({"meta":v[1],"value":v[1]});
+            thresholdVals.push(v[1]);
+
+            // push data to data line
+            if (chartType == "1day") {
+              if (chartTypesDetail["detail1day"]) {
+                var detailData = renderDetailData(dataDetailDay[index][k], chartType, v[1]);
+                dataVals.push({meta: detailData, value: v[0]});
+              }
+              else {
+                dataVals.push(v[0]);
+              }
+            }
+            else {
+              dataVals.push(v[0]);
+            }
 
             // If threshold value more than max data 
             v[0] = parseInt(v[0]);
@@ -682,6 +857,11 @@
             case "30day":
               axisXTitle = "從 " + formatDate(dateFromYmd(dateStart), "/") + " 起的 30 天";
               break;
+
+            case "6month":
+              var ds = dateStart.split("-");
+              axisXTitle = "從 " + formatDate(getDateOfISOWeek(ds[1], ds[0]), "/") + " 起的半年（單位：週）";
+              break;
           } 
 
           var order = facilityType[name[3]]["order"];
@@ -702,6 +882,7 @@
             "option": chartOption
           };
         }
+
         // render chart in correct order
         var fine, added;
         for (facility in prepared) {
@@ -726,11 +907,55 @@
             axisTitleOption.axisY.axisTitle = pre.axis.y;
             pre.option.plugins = [
               // Chartist.plugins.ctThreshold({threshold: 40}),
-              Chartist.plugins.tooltip(),
+              Chartist.plugins.tooltip({
+                tooltipFnc: function (meta, value, event) {
+                  var output = '';
+
+                  if (meta) {
+                    meta = $("<textarea/>").html(meta).text(); // decode meta
+                    output += "<div class='chartist-tooltip-meta'>" + meta + "</div>";
+                  }
+
+                  output += "<div class='chartist-tooltip-value'>" + value + "</div>";
+                  
+                  return output;
+                }
+              }),
               Chartist.plugins.ctAxisTitle(axisTitleOption)
             ];
 
-            new Chartist.Line("." + pre.index, pre.data, pre.option);
+            var chart = new Chartist.Line("." + pre.index, pre.data, pre.option);
+            chart.on('draw', function(data) {
+              if (data.type == 'line') {
+                console.log(data);
+              }
+              if (data.type == 'line' && data.series.name == 'threshold-line') {
+                // console.log(data);
+
+                if (typeof data.values["0"] != 'undefined') {
+                  var axisX = data.axisX.axisLength + data.axisX.gridOffset + 15;
+                  var axisY = data.axisY.axisLength == data.path.pathElements["0"].y ? data.path.pathElements["0"].y - 10 : data.path.pathElements["0"].y;
+                  var val = data.values["0"].y;
+                  
+                  var caption = new Chartist.Svg('g');
+                  caption.addClass('ct-threshold-caption');
+
+                  var captionLabel = new Chartist.Svg('text', {
+                        x: axisX,
+                        y: axisY
+                      }, 'ct-threshold-caption-label', caption);
+                  captionLabel.text('標準值');
+                  
+                  var captionValue = new Chartist.Svg('text', {
+                        x: axisX,
+                        y: axisY + 15
+                      }, 'ct-threshold-caption-value', caption);
+                  captionValue.text(val);
+                  
+                  data.group.append(caption);
+                }
+              }
+            });
             var additionalClass = fine ? "chart-report" : "chart-normal";
             $("."+pre.index).addClass(additionalClass);
             chartSum++;
@@ -787,7 +1012,7 @@
             var $chart       = $parent.next(".ct-chart");
             var chartID      = $chart.attr("id");
             var chartType    = $chart.attr("data-chart-type");
-            var chartName    = $chart.attr("data-chart-name") + "（" + typesName[chartType] + "）";
+            var chartName    = $chart.attr("data-chart-name") + "（" + chartTypes[chartType] + "）";
             var chartDate    = [year, month, day].join("/");
             var fileNameVal  = chartID.replace(/^chart-T/, '')+'_'+ymd;
             var facilityName = $(".views-field-facility-name .field-content").text();
@@ -878,17 +1103,37 @@
       }, 500);
 
       // main function
-      for(var key in chartTypes) {
-        var dataURL = url.replace('{type}', chartTypes[key]);
+      for(var ctype in chartTypes) {
+        var dataURL = url.replace('{type}', ctype);
         (function(url, type){
           Papa.parse(url, {
             download: true,
             complete: function(results){
-              renderChart(results, type);
+              if (type == '1day') {
+                if (chartTypesDetail['detail1day']) {
+                  var detailDataURL = url.replace('1day', 'detail1day');
+
+                  Papa.parse(detailDataURL, {
+                    download: true,
+                    complete: function(results){
+                      dataDetailDay = getDetailDay(results, type);
+                      renderChart(results, type);
+                      dataLoadNum++;
+                    }
+                  });
+                }
+                else {    
+                  renderChart(results, type);
+                }
+              }
+              else {
+                renderChart(results, type);
+              }
+
               dataLoadNum++;
             } 
           });
-        })(dataURL, chartTypes[key]);
+        })(dataURL, ctype);
       }
     }); // for run only once
     },

@@ -15,6 +15,22 @@ line.ct-point:hover {
   opacity: 0.75;
   cursor: pointer;
 }
+.ct-series-threshold .ct-point,
+.ct-series-threshold .ct-point:hover {
+  opacity: 0;
+  cursor: auto;
+}
+.ct-threshold-caption-label {
+  font-size: 12px;
+}
+.ct-threshold-caption-value {
+  font-size: 12px;
+}
+.admin-menu .ct-threshold-caption {
+  fill: red;
+}
+
+/* chartist tooltip */
 .chartist-tooltip {
   position: absolute;
   display: inline-block;
@@ -53,6 +69,19 @@ line.ct-point:hover {
     opacity: 1;
   }
 
+/* chart data detail list */
+.data-detail-list {
+  margin: 0;
+  text-align: left;
+  list-style: none;
+}
+.data-detail-list .data-time + .data-value:before {
+  content: " - ";
+}
+.data-detail-list .is-exceed .data-value {
+  color: #ff0000;
+}
+
 /* chart item */
 .chart-item .chart-btns {
   text-align: right;
@@ -74,6 +103,11 @@ line.ct-point:hover {
 }
 .chart-item .chart-share-btn {
   background: #095ddb;
+}
+
+/* chart: 1day */
+.chart[data-chart-type="1day"] .chartist-tooltip-value {
+  display: none;
 }
 
 /* tabs */

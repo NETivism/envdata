@@ -25,7 +25,7 @@ function envdata_prepare_chart($vars) {
       }
     }
     else{
-      $types = _envdata_chart_types();
+      $types = array_keys(_envdata_chart_types());
       foreach($types as $k => $t){
         $filename = DRUPAL_ROOT . str_replace('{type}', $t, $path);
         if(file_exists($filename)){
@@ -36,8 +36,18 @@ function envdata_prepare_chart($vars) {
           unset($types[$k]);
         }
       }
-      $settings['types'] = $types;
+      $settings['types'] = _envdata_chart_types();
     }
+
+    $types_detail = _envdata_chart_types_detail();
+    foreach ($types_detail as $k => $t) {
+      $filename = DRUPAL_ROOT . str_replace('{type}', $k, $path);
+      
+      if (!file_exists($filename)) {
+        unset($types_detail[$k]);
+      }
+    }
+    $settings['types_detail'] = $types_detail;
 
     if($pass) {
       envdata_add_resource();
@@ -136,7 +146,7 @@ function _envdata_verify_chart_id($chart_id){
   }
 
   $available_types = _envdata_chart_types();
-  if(!in_array($ary[0], $available_types)){
+  if(!array_key_exists($ary[0], $available_types)){
     return FALSE;
   }
   
@@ -152,5 +162,15 @@ function _envdata_verify_chart_id($chart_id){
 }
 
 function _envdata_chart_types(){
-  return array('1day', '30day');
+  return array(
+    '1day' => '24小時', 
+    '30day' => '30天',
+    '6month' => '半年',
+  );
+}
+
+function _envdata_chart_types_detail(){
+  return array(
+    'detail1day' => '24小時',
+  );
 }
