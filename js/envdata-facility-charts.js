@@ -826,7 +826,7 @@
           var chartItem = "<div id='ci-" + index + "' class='chart-item' data-chart-gid='" + chartGID + "' data-chart-type='" + chartType + "'>";
           var chartBtnClass = exceed && fine ? "chart-report-btn" : "chart-share-btn";
           var chartBtnText = exceed && fine ? "檢舉與分享" : "分享";
-          var chartBtn = exceed ? "<a class='chart-btn " + chartBtnClass + "' href='#' data-chart-id='" + chartID + "'><span class='fa fa-share'></span>" + chartBtnText + "</a>" : "";
+          var chartBtn = exceed && Drupal.settings.envdata.display_share ? "<a class='chart-btn " + chartBtnClass + "' href='#' data-chart-id='" + chartID + "'><span class='fa fa-share'></span>" + chartBtnText + "</a>" : "";
           var facilityName = "";
           if (lastMonitorId !== name[2] && chartType == typeDefault) {
             facilityName = name[2];
