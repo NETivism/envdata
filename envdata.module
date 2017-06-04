@@ -56,6 +56,10 @@ function envdata_block_info() {
     'info' => 'envdata: facility realtime charts',
     'cache' => DRUPAL_NO_CACHE,
   );
+  $block['facility_realtime_charts_gov'] = array(
+    'info' => 'envdata: facility realtime charts for gov',
+    'cache' => DRUPAL_NO_CACHE,
+  );
 
   return $block;
 }
@@ -66,9 +70,20 @@ function envdata_block_view($delta = '') {
   switch ($delta) {
     case 'facility_realtime_charts':
       module_load_include('inc', 'envdata', 'envdata.chart');
-      if(arg(0) == 'facility' && arg(1)){
+      if(arg(0) == 'facility' && arg(1) && empty(arg(2))){
         $vars = array(
           'registration_no' => arg(1),
+          'path' => 'realtime/chimney_cache/{type}/' . arg(1) . '.csv',
+        );
+        $block['content'] = envdata_prepare_chart($vars);
+      }
+      break;
+    case 'facility_realtime_charts_gov':
+      module_load_include('inc', 'envdata', 'envdata.chart');
+      if(arg(0) == 'facility' && arg(1) && arg(2) == 'gov'){
+        $vars = array(
+          'registration_no' => arg(1),
+          'path' => 'realtime/chimney_cache_gov/{type}/' . arg(1) . '.csv',
         );
         $block['content'] = envdata_prepare_chart($vars);
       }

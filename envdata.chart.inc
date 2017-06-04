@@ -4,9 +4,14 @@ function envdata_prepare_chart($vars) {
   global $base_url;
 
   if(!empty($vars['registration_no'])){
-    $path = '/realtime/chimney_cache/{type}/' . $vars['registration_no'] . '.csv';
+    if ($vars['path']) {
+      $path = $vars['path'];
+    }
+    else {
+      $path = 'realtime/chimney_cache/{type}/' . $vars['registration_no'] . '.csv';
+    }
     if(empty($vars['data_url'])){
-      $vars['data_url'] = $base_url . $path;
+      $vars['data_url'] = $base_url . base_path(). $path;
     }
 
     // verify file exists
@@ -21,7 +26,7 @@ function envdata_prepare_chart($vars) {
     if(!empty($vars['type'])){
       $all_types = _envdata_chart_types();
       $settings['types'] = array($vars['type'] => $all_types[$vars['type']]);
-      $filename = DRUPAL_ROOT . str_replace('{type}', $vars['type'], $path);
+      $filename = DRUPAL_ROOT . '/'. str_replace('{type}', $vars['type'], $path);
       $settings['display_help'] = FALSE;
       $settings['display_share'] = FALSE;
       if(file_exists($filename)){
@@ -32,7 +37,7 @@ function envdata_prepare_chart($vars) {
     else{
       $types = array_keys(_envdata_chart_types());
       foreach($types as $k => $t){
-        $filename = DRUPAL_ROOT . str_replace('{type}', $t, $path);
+        $filename = DRUPAL_ROOT . '/' . str_replace('{type}', $t, $path);
         if(file_exists($filename)){
           $pass = TRUE;
           $settings['dataURL'] = $vars['data_url'];
