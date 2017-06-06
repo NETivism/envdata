@@ -35,9 +35,9 @@ function envdata_prepare_chart($vars) {
       }
     }
     else{
-      $types = array_keys(_envdata_chart_types());
+      $types = _envdata_chart_types();
       foreach($types as $k => $t){
-        $filename = DRUPAL_ROOT . '/' . str_replace('{type}', $t, $path);
+        $filename = DRUPAL_ROOT . '/' . str_replace('{type}', $k, $path);
         if(file_exists($filename)){
           $pass = TRUE;
           $settings['dataURL'] = $vars['data_url'];
@@ -46,7 +46,7 @@ function envdata_prepare_chart($vars) {
           unset($types[$k]);
         }
       }
-      $settings['types'] = _envdata_chart_types();
+      $settings['types'] = $types;
     }
 
     $types_detail = _envdata_chart_types_detail();
