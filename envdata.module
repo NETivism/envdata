@@ -73,7 +73,7 @@ function envdata_block_view($delta = '') {
       if(arg(0) == 'facility' && arg(1) && empty(arg(2))){
         $vars = array(
           'registration_no' => arg(1),
-          'path' => 'realtime/chimney_cache/{type}/' . arg(1) . '.csv',
+          'path' => 'realtime/air/chimney_cache/{type}/' . arg(1) . '.csv',
         );
         $block['content'] = envdata_prepare_chart($vars);
       }
@@ -83,7 +83,7 @@ function envdata_block_view($delta = '') {
       if(arg(0) == 'facility' && arg(1) && arg(2) == 'gov'){
         $vars = array(
           'registration_no' => arg(1),
-          'path' => 'realtime/chimney_cache_gov/{type}/' . arg(1) . '.csv',
+          'path' => 'realtime/air/chimney_cache_gov/{type}/' . arg(1) . '.csv',
         );
         $block['content'] = envdata_prepare_chart($vars);
       }

@@ -8,7 +8,7 @@ function envdata_prepare_chart($vars) {
       $path = $vars['path'];
     }
     else {
-      $path = 'realtime/chimney_cache/{type}/' . $vars['registration_no'] . '.csv';
+      $path = 'realtime/air/chimney_cache/{type}/' . $vars['registration_no'] . '.csv';
     }
     if(empty($vars['data_url'])){
       $vars['data_url'] = $base_url . base_path(). $path;
