@@ -73,17 +73,17 @@ function envdata_block_view($delta = '') {
       if(arg(0) == 'facility' && arg(1) && empty(arg(2))){
         $vars = array(
           'registration_no' => arg(1),
-          'path' => 'realtime/air/chimney_cache/{type}/' . arg(1) . '.csv',
+          'path' => 'realtime/air/chimney_cache_gov/{type}/' . arg(1) . '.csv',
         );
         $block['content'] = envdata_prepare_chart($vars);
       }
       break;
     case 'facility_realtime_charts_gov':
       module_load_include('inc', 'envdata', 'envdata.chart');
-      if(arg(0) == 'facility' && arg(1) && arg(2) == 'gov'){
+      if(arg(0) == 'facility' && arg(1) && arg(2) == 'local'){
         $vars = array(
           'registration_no' => arg(1),
-          'path' => 'realtime/air/chimney_cache_gov/{type}/' . arg(1) . '.csv',
+          'path' => 'realtime/air/chimney_cache/{type}/' . arg(1) . '.csv',
         );
         $block['content'] = envdata_prepare_chart($vars);
       }
