@@ -897,7 +897,7 @@
           for (order in prepared[facility]) {
             var pre = prepared[facility][order];
             fine = pre.type.fine;
-            if (pre.facility) {
+            if (pre.facility && !added) {
               $root.append("<h3>"+pre.facility+"煙道</h3>");
             }
             if (fine && !added && chartType == typeDefault) {
