@@ -563,6 +563,7 @@
             // trigger resize event to prevent chart loosing width
             $(this).find('.ct-chart:visible').each(function(e, tab){
               tab.__chartist__.update();
+              $('g.ct-series-threshold path').removeAttr('mask');
             });
             var ctype = $thisTabs.find('li.active').attr('data-chart-type');
             ga('send', 'event', 'chart', 'tab-'+ctype, $thisTabs.attr('id'));
@@ -745,8 +746,9 @@
 
           var keys = Object.keys(values[index]);
           var exceed = false;
-          var topValue;
-          var lastMonitorId;
+          var topValue = null;
+          var lastMonitorId = null;
+          var lastStandardVal = 0;
 
           // console.log(values[index]);
           for (var i = 0; i < keys.length; i++) {
@@ -773,7 +775,13 @@
 
             // push data to threshold line
             v[1] = v[1] == 0 ? "" : v[1];
-            thresholdVals.push(v[1]);
+            if (!v[1]) {
+              v[1] = lastStandardVal;
+            }
+            if (v[1]) {
+              thresholdVals.push(v[1]);
+              lastStandardVal = v[1];
+            }
 
             // push data to data line
             if (chartType == "1day") {
@@ -795,8 +803,6 @@
             topValue = topValue === undefined ? topValue = v[0] : topValue < v[0] ? topValue = v[0] : topValue = topValue;
             
             if (i == keys.length - 1) {
-              // console.log("topValue: " + topValue);
-
               if (v[1]) {
                 if (v[1] >= topValue) {
                   // console.log("threshold: " + v[1]);
@@ -809,7 +815,6 @@
                 }
               }
 
-              topValue = undefined;
             }
           }
 
@@ -879,6 +884,7 @@
             "chartType": chartType,
             "facility": facilityName,
             "axis": {"x":axisXTitle, "y":axisYTitle},
+            "standard": lastStandardVal ? lastStandardVal : topValue + 10,
             "option": chartOption
           };
         }
@@ -906,7 +912,6 @@
             axisTitleOption.axisX.axisTitle = pre.axis.x;
             axisTitleOption.axisY.axisTitle = pre.axis.y;
             pre.option.plugins = [
-              // Chartist.plugins.ctThreshold({threshold: 40}),
               Chartist.plugins.tooltip({
                 tooltipFnc: function (meta, value, event) {
                   var output = '';
@@ -921,14 +926,19 @@
                   return output;
                 }
               }),
-              Chartist.plugins.ctAxisTitle(axisTitleOption)
+              Chartist.plugins.ctAxisTitle(axisTitleOption),
+              Chartist.plugins.ctThreshold({
+                threshold: pre.standard,
+                maskNames: {
+                  aboveThreshold: 'ct-threshold-' +pre.index + '-above',
+                  belowThreshold: 'ct-threshold-' +pre.index + '-below',
+                }
+              })
             ];
 
             var chart = new Chartist.Line("." + pre.index, pre.data, pre.option);
             chart.on('draw', function(data) {
               if (data.type == 'line' && data.series.name == 'threshold-line') {
-                // console.log(data);
-
                 if (typeof data.values["0"] != 'undefined') {
                   var axisX = data.axisX.axisLength + data.axisX.gridOffset + 15;
                   var axisY = data.axisY.axisLength == data.path.pathElements["0"].y ? data.path.pathElements["0"].y - 10 : data.path.pathElements["0"].y;
@@ -982,6 +992,9 @@
         }
 
         if (chartAllLoad) {
+          // remove standard
+          $('g.ct-series-threshold path').removeAttr('mask');
+
           // Set chartist_load is true after gerenate all charts.
           $('.colorbox-node', context).once('init-colorbox-node-processed', function () {
             $(this).colorboxNode({'launch': false});

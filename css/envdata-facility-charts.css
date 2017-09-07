@@ -1,6 +1,12 @@
 /* chart */
-.ct-series-a .ct-line {
+.ct-line {
   stroke-width: 2px;
+}
+.ct-point {
+  stroke-width: 7px;
+}
+.ct-series-a .ct-line {
+  stroke-width: 1px;
 }
 .ct-series-b .ct-line {
   stroke: #2196F3;
@@ -14,6 +20,19 @@
 line.ct-point:hover {
   opacity: 0.75;
   cursor: pointer;
+}
+.ct-line.ct-threshold-above, .ct-point.ct-threshold-above, .ct-bar.ct-threshold-above {
+  stroke: #f05b4f;
+} 
+
+.ct-line.ct-threshold-below, .ct-point.ct-threshold-below, .ct-bar.ct-threshold-below {
+  stroke: #2196F3;
+}
+.ct-area.ct-threshold-above {
+  fill: #f05b4f;
+}
+.ct-area.ct-threshold-below {
+  stroke: #2196F3;
 }
 .ct-series-threshold .ct-point,
 .ct-series-threshold .ct-point:hover {
@@ -207,3 +226,4 @@ line.ct-point:hover {
     display: none;
   }
 }
+
