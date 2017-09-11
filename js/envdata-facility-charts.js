@@ -8,7 +8,7 @@
 
       var loadingSvg       = Drupal.settings.envdata.loading;
       var chartAllLoad     = 0;
-      var chartTotal       = 1;
+      var chartTotal       = 2;
       var chartInterval = {},
           chartIntervalDetail = {},
           chartIntervalDefault = '';
@@ -265,7 +265,6 @@
         var $charts = $(this);
         var intervalDefault = $charts.data('interval-default');
         var $chartItem = $charts.find(".chart-item[data-chart-interval='"+intervalDefault+"']");
-        console.log($chartItem.length);
         
         $chartItem.each(function() {
           var gid = $(this).attr("data-chart-gid");
@@ -303,6 +302,7 @@
             // trigger resize event to prevent chart loosing width
             $(this).find('.ct-chart:visible').each(function(e, tab){
               tab.__chartist__.update();
+              $('g.ct-series-threshold path.ct-threshold-below').remove();
               $('g.ct-series-threshold path').removeAttr('mask');
             });
             var cInterval= $thisTabs.find('li.active').attr('data-chart-interval');
@@ -329,6 +329,8 @@
           // apply filter parameter from drupal setting
           var include = 1;
           if($chartWrapper.data('filter')){
+            var filter = $chartWrapper.data('filter');
+
             var regex = new RegExp(filter);
             if(!regex.test(index)){
               include = 0;
@@ -413,6 +415,7 @@
           // apply filter parameter from drupal setting
           var include = 1;
           if($chartWrapper.data('filter')){
+            var filter = $chartWrapper.data('filter');
             var regex = new RegExp(filter); 
             if(!regex.test(index)){
               include = 0;
@@ -547,7 +550,7 @@
           var chartItem = "<div id='wrapper-" + index + "' class='chart-item' data-chart-gid='" + chartGID + "' data-chart-interval='" + interval + "'>";
           var chartBtnClass = exceed && fine ? "chart-report-btn" : "chart-share-btn";
           var chartBtnText = exceed && fine ? "檢舉與分享" : "分享";
-          var chartBtn = exceed && Drupal.settings.envdata.display_share ? "<a class='chart-btn " + chartBtnClass + "' href='#' data-chart-id='" + chartID + "'><span class='fa fa-share'></span>" + chartBtnText + "</a>" : "";
+          var chartBtn = exceed && $chartWrapper.data('display-share') ? "<a class='chart-btn " + chartBtnClass + "' href='#' data-chart-id='" + chartID + "'><span class='fa fa-share'></span>" + chartBtnText + "</a>" : "";
           var facilityName = "";
           if (lastMonitorId !== name[2] && interval == $chartWrapper.data('interval-default')) {
             facilityName = name[2];
@@ -694,6 +697,7 @@
           clearInterval(chartLoadComplete);
 
           // remove standard
+          $('g.ct-series-threshold path.ct-threshold-below').remove();
           $('g.ct-series-threshold path').removeAttr('mask');
 
           // Set chartist_load is true after gerenate all charts.
@@ -722,12 +726,12 @@
 
             var $chart       = $parent.next(".ct-chart");
             var chartID      = $chart.attr("id");
-            var chartInterval = $chart.attr("data-chart-interval");
-            var chartName    = $chart.attr("data-chart-name") + "（" + chartInterval[interval] + "）";
+            var interval = $chart.data("chart-interval");
+            var chartName    = $chart.data("chart-name") + "（" + chartInterval[interval] + "）";
             var chartDate    = [year, month, day].join("/");
-            var fileNameVal  = chartID.replace(/^chart-T/, '')+'_'+ymd;
+            var fileNameVal  = chartID+'_'+ymd;
             var facilityName = $(".views-field-facility-name .field-content").text();
-            var registrationNo = fileNameVal.split('_')[1];
+            var registrationNo = fileNameVal.split('_')[2];
             // var pngDataVal   = svgToPng(chartID);
             if (report) {
               ga('send', 'event', 'chart', 'share', 'report-'+chartID);
@@ -758,7 +762,6 @@
                 shareModal += "<h4 class='chart-name'>" + chartName + "</h4>";
                 shareModal += "<div class='chart-img'><img src='" + chartImgURL + "' /></div>";
                 shareModal += "<div class='share-text'>" + shareText + "</div>";
-                // shareModal += "<div class='share-btns-top'><a href='#' class='fb-share-btn'>分享到Facebook</a></div>";
                 shareModal += "<div class='share-btns-bottom'>";
                 shareModal += "<a href='#' class='btn fb-share-btn'>分享到Facebook <i class='fa fa-share'></i></a>";
                 if (report) {
@@ -768,7 +771,8 @@
                 $("body").append(shareModal);
                 
                 // Open share modal automatically
-                $shareModal = $("#chart-share-modal");
+               
+                var $shareModal = $("#chart-share-modal");
                 $shareModal.modal();
 
                 // Remove share modal after modal closed

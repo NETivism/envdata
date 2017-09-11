@@ -7,9 +7,6 @@ function envdata_prepare_chart($vars) {
     if ($vars['path']) {
       $path = $vars['path'];
     }
-    else {
-      $path = 'realtime/air/chimney_cache/{interval}/' . $vars['registration_no'] . '.csv';
-    }
     if(empty($vars['data_url'])){
       $vars['data_url'] = $base_url . base_path(). $path;
     }
@@ -37,7 +34,7 @@ function envdata_prepare_chart($vars) {
     // using by svg
     if(!empty($vars['interval'])){
       $all_interval = _envdata_chart_interval();
-      $attributes['interval'] = array($vars['interval'] => $all_interval[$vars['interval']]);
+      $attributes['interval'] = $vars['interval'];
       $filename = DRUPAL_ROOT . '/'. str_replace('{interval}', $vars['interval'], $path);
       $attributes['display-help'] = 0;
       $attributes['display-share'] = 0;
@@ -100,18 +97,19 @@ function envdata_chart_build_attr($attributes) {
 function envdata_chart_svg($chart_id) {
   $chart_args = _envdata_verify_chart_id($chart_id);
   if($chart_args){
-    if(count($chart_args) == 5){
+    if(count($chart_args) == 6){
       $datetime = array_pop($chart_args);
     }
     $vars = array(
-      'type' => $charts_args[0],
+      'type' => $chart_args[0],
       'interval' => $chart_args[1],
       'registration_no' => $chart_args[2],
       'filter' => implode('_', $chart_args),
+      'path' => 'realtime/air/chimney_cache_gov/{interval}/' . $chart_args[2] . '.csv',
     );
     $output = envdata_prepare_chart($vars);
     if($output) {
-      $name = db_query("SELECT facility_name FROM {factory} WHERE registration_no = :rid", array('rid' => $chart_args[1]))->fetchField();
+      $name = db_query("SELECT facility_name FROM {factory} WHERE registration_no = :rid", array('rid' => $chart_args[2]))->fetchField();
       drupal_set_title($name .' - ' . date('Y/m/d')); 
     }
     return $output;
