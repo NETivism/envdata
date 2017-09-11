@@ -1,23 +1,16 @@
 (function ($, Drupal, window, document) {
-
-  // 'use strict';
+  'use strict';
 
   Drupal.behaviors.envdata = {
     attach: function (context, settings) {
-    $("#charts:not(.is-processed)", context).once('envdata', function(){
-      $("#charts").addClass('is-processed');
+    $(".charts-wrapper:not(.is-processed)", context).once('envdata', function(){
+      $(this).addClass('is-processed');
 
-      var url              = Drupal.settings.envdata.dataURL;
-      var chartTypes       = Drupal.settings.envdata.types;
-      var chartTypesDetail = Drupal.settings.envdata.types_detail;
-      var typeDefault      = '30day';
-      var dataSum          = Object.keys(chartTypes).length + Object.keys(chartTypesDetail).length;
-      var dataLoadNum      = 0;
-      var dataAllLoad      = false;
-      var chartSum         = 0;
-      var chartLoadNum     = 0;
-      var chartAllLoad     = false;
       var loadingSvg       = Drupal.settings.envdata.loading;
+      var chartAllLoad     = false;
+      var chartInterval = {},
+          chartIntervalDetail = {},
+          chartIntervalDefault = '';
 
       var dataDetailDay = {};
 
@@ -462,7 +455,6 @@
         var container = document.getElementById(container);
         var svg = container.querySelector("svg");
         
-        //console.log(svg);
         
         if (typeof window.XMLSerializer != "undefined") {
           var svgData = (new XMLSerializer()).serializeToString(svg);
@@ -472,8 +464,6 @@
           var svgData = svg.xml;
         }
 
-        // console.log(svg);
-        // console.log(svgData);
 
         var canvas = document.createElement("canvas");
         var svgSize = svg.getBoundingClientRect();
@@ -483,8 +473,6 @@
 
         var ctx = canvas.getContext("2d");
 
-        // console.log(canvas);
-
         var img = document.createElement("img");
         img.setAttribute("src", "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgData))) );
 
@@ -492,22 +480,6 @@
         var pngData = canvas.toDataURL("image/png");
         
         return pngData;
-
-        /*
-        img.onload = function() {
-          console.log('img onload !!');
-          ctx.drawImage(img, 0, 0);
-          var pngData = canvas.toDataURL("image/png");
-          
-          if (pngData) {
-            return pngData;
-          }
-          
-          // var newimg = document.createElement("img");
-          // newimg.setAttribute("src", imgsrc);
-          //document.body.appendChild(newimg);
-        };
-        */
       }
 
       var fbDialog = function(settings) { 
@@ -525,7 +497,7 @@
 
       var groupChart = function() {
         var $charts = $("#charts");
-        var $chartItem = $("#charts > .chart-item[data-chart-type='"+typeDefault+"']");
+        var $chartItem = $("#charts > .chart-item[data-chart-interval='"+chartIntervalDefault+"']");
         
         $chartItem.each(function() {
           var gid = $(this).attr("data-chart-gid");
@@ -536,16 +508,16 @@
           $(this).after($thisTabs);
 
           var activeTab;
-          for (var ctype in chartTypes) {
-            var i = Object.keys(chartTypes).indexOf(ctype);
-            var $chartItem = $(".chart-item[data-chart-gid='" + gid + "'][data-chart-type='"+ctype+"']");
+          for (var cInterval in chartInterval) {
+            var i = Object.keys(chartInterval).indexOf(cInterval);
+            var $chartItem = $(".chart-item[data-chart-gid='" + gid + "'][data-chart-interval='"+cInterval+"']");
 
             if ($chartItem.length) {
-              if (ctype == typeDefault) {
+              if (cInterval == chartIntervalDefault) {
                 activeTab = parseInt(i)+1; 
               }
               var chartItemID = $chartItem.attr("id");  
-              $tabsControl.append("<li class='tab' data-chart-type='" + ctype + "'><a href='#" + chartItemID + "'>" + chartTypes[ctype] + "</a></li>");
+              $tabsControl.append("<li class='tab' data-chart-interval='" + cInterval + "'><a href='#" + chartItemID + "'>" + chartInterval[cInterval] + "</a></li>");
               $chartItem.addClass("tabs-panel")
               if($chartItem.find('.chart-report').length){
                 $thisTabs.addClass('section-report');
@@ -565,26 +537,16 @@
               tab.__chartist__.update();
               $('g.ct-series-threshold path').removeAttr('mask');
             });
-            var ctype = $thisTabs.find('li.active').attr('data-chart-type');
-            ga('send', 'event', 'chart', 'tab-'+ctype, $thisTabs.attr('id'));
-            /*
-            if (document.createEvent) { // W3C
-              window.dispatchEvent(new Event('resize'));
-            }
-            else { // IE
-              element = document.documentElement;
-              var ev = document.createEventObject();
-              element.fireEvent("onresize", ev);
-            }
-            */
+            var cInterval= $thisTabs.find('li.active').attr('data-chart-interval');
+            ga('send', 'event', 'chart', 'tab-'+cInterval, $thisTabs.attr('id'));
           });
         });
       }
 
-      var getDetailDay = function(results, chartType) {
+      var getDetailDay = function(results, interval, $chartWrapper) {
         var values = {};
         var i, indexo, row, index, value, time;
-        var filter = Drupal.settings.envdata.filter;
+        var type = $chartWrapper.data('type');
 
         // loop
         // grouping by registration_no,facility_no,type
@@ -592,11 +554,11 @@
           row = results.data[i];
           if(row.length < 5) continue;
           // 1day_registrationNo_facilityNo_type
-          index = chartType+'_'+row[0] + "_" + row[1] + "_" + row[2];
+          index = type+'_'+interval+'_'+row[0] + "_" + row[1] + "_" + row[2];
 
           // apply filter parameter from drupal setting
           var include = 1;
-          if(filter){
+          if($chartWrapper.data('filter')){
             var regex = new RegExp(filter);
             if(!regex.test(index)){
               include = 0;
@@ -604,7 +566,7 @@
           }
 
           if(include) {
-            index = 'T'+index;
+            index = index;
             value = row[3];
             time = row[7].split("-");
 
@@ -631,9 +593,9 @@
         return values;
       }
 
-      var renderDetailData = function(data, chartType, threshold) {
+      var renderDetailData = function(data, interval, threshold) {
         var output = "";
-        var chartType = typeof chartType !== "undefined" ? chartType : "1day";
+        var interval = typeof interval !== "undefined" ? interval : "1day";
 
         if (data) {
           if (!("0" in data)) {
@@ -664,11 +626,11 @@
         return output;
       }
 
-      var renderChart = function(results, chartType){
+      var renderChart = function(results, interval, $chartWrapper){
         // two level object
         var values = {};
         var i, indexo, row, index, datehour, max, avg, threshold;
-        var filter = Drupal.settings.envdata.filter;
+        var type = $chartWrapper.data('type');
 
         // loop 
         // grouping by registration_no,facility_no,type
@@ -676,11 +638,11 @@
           row = results.data[i];
           if(row.length < 5) continue;
           // 1day_registrationNo_facilityNo_type
-          index = chartType+'_'+row[0] + "_" + row[1] + "_" + row[2];
+          index = type+'_'+interval+'_'+row[0] + "_" + row[1] + "_" + row[2];
 
           // apply filter parameter from drupal setting
           var include = 1;
-          if(filter){
+          if($chartWrapper.data('filter')){
             var regex = new RegExp(filter); 
             if(!regex.test(index)){
               include = 0;
@@ -688,7 +650,6 @@
           }
 
           if(include) {
-            index = 'T'+index;
             max = row[3];
             avg = row[4];
             threshold = row[6] || 0;
@@ -698,38 +659,28 @@
             }
             values[index][row[5]] = [max, threshold];
 
-            /*
-            if (i==0) {
-              if (chartType=='1day') {
-                console.log('1day: '+row[5]);
-              } else {
-                console.log('30day: '+row[5]);
-              }
-            }
-            */
-
             indexo = index;
           }
         }
 
         // create chart
         var data, prepared = [];
-        var $root = $("#charts");
         var count = 0;
 
         for(index in values) {
           var name = index.split("_");
+          var type = name.shift();
           
           // Reordering object in the beginning to ensure order of time is correct
           values[index] = sortObj(values[index]);
           
           var dateStart = Object.keys(values[index])[0];
           
-          if(chartType == '1day') {
+          if(interval == '1day') {
             values[index] = missingHours(values[index]);
           }
 
-          if (chartType == '6month') {
+          if (interval == '6month') {
             values[index] = missingWeeks(values[index]);
           }
 
@@ -750,11 +701,10 @@
           var lastMonitorId = null;
           var lastStandardVal = 0;
 
-          // console.log(values[index]);
           for (var i = 0; i < keys.length; i++) {
             var k = keys[i];
 
-            switch (chartType) {
+            switch (interval) {
               case "1day":
                 var hour = k.replace("t", "");
                 data.labels.push(hour);
@@ -784,9 +734,9 @@
             }
 
             // push data to data line
-            if (chartType == "1day") {
-              if (chartTypesDetail["detail1day"]) {
-                var detailData = renderDetailData(dataDetailDay[index][k], chartType, v[1]);
+            if (interval == "1day") {
+              if (chartIntervalDetail["detail1day"]) {
+                var detailData = renderDetailData(dataDetailDay[index][k], interval, v[1]);
                 dataVals.push({meta: detailData, value: v[0]});
               }
               else {
@@ -805,9 +755,7 @@
             if (i == keys.length - 1) {
               if (v[1]) {
                 if (v[1] >= topValue) {
-                  // console.log("threshold: " + v[1]);
                   v[1] += 10;
-                  // console.log("high: " + v[1]);
                   chartOption.high = v[1];
                 } 
                 else {
@@ -818,9 +766,7 @@
             }
           }
 
-          // data["series"].push(line);
-          // console.log(data);
-          var chartID = "chart-" + index;
+          var chartID = index;
           var chartGID = name[1] + "_" + name[2] + "_" + name[3];
           var fine = facilityType[name[3]]["fine"];
           var knowledgeUrl = "";
@@ -828,22 +774,22 @@
             knowledgeUrl = '<a href="/knowledge/'+facilityType[name[3]]["help"]+'" target="_blank" title="說明" class="help-link colorbox-node"><span class="fa fa-question-circle"></span></a>';
           }
           var chartName = name[2] + " - " + facilityType[name[3]]["desp"] + knowledgeUrl;
-          var chartItem = "<div id='ci-" + index + "' class='chart-item' data-chart-gid='" + chartGID + "' data-chart-type='" + chartType + "'>";
+          var chartItem = "<div id='wrapper-" + index + "' class='chart-item' data-chart-gid='" + chartGID + "' data-chart-type='" + interval + "'>";
           var chartBtnClass = exceed && fine ? "chart-report-btn" : "chart-share-btn";
           var chartBtnText = exceed && fine ? "檢舉與分享" : "分享";
           var chartBtn = exceed && Drupal.settings.envdata.display_share ? "<a class='chart-btn " + chartBtnClass + "' href='#' data-chart-id='" + chartID + "'><span class='fa fa-share'></span>" + chartBtnText + "</a>" : "";
           var facilityName = "";
-          if (lastMonitorId !== name[2] && chartType == typeDefault) {
+          if (lastMonitorId !== name[2] && interval == chartIntervalDefault) {
             facilityName = name[2];
           }
           lastMonitorId = name[2];
-          var title = (chartType === typeDefault) ? "<h5>" + chartName + "</h5>" : "<strong>" + chartName + "</strong>";
+          var title = (interval === chartIntervalDefault) ? "<h5>" + chartName + "</h5>" : "<strong>" + chartName + "</strong>";
           chartItem += title; 
           
           if(chartBtn){
             chartItem += "<div class='chart-btns'><a class='help-link colorbox-node' href='"+Drupal.settings.envdata.helplink+"' title='怎樣是排放超標？怎樣才達到違法要開罰的標準？' target='_blank'><span class='fa fa-question-circle'></span>超標說明</a>" + chartBtn + "</div>";
           }
-          chartItem += "<div id='" + chartID + "' class='" + index + " chart ct-chart' data-chart-name='" + chartName  + "' data-chart-type='" + chartType + "'></div>";
+          chartItem += "<div id='" + chartID + "' class='" + chartID + " chart ct-chart' data-chart-name='" + chartName  + "' data-chart-interval='" + interval + "'></div>";
           chartItem += "</div>";
 
           // Create a new line chart object where as first parameter we pass in a selector
@@ -853,7 +799,7 @@
 
           var axisXTitle;
 
-          switch (chartType) {
+          switch (interval) {
             case "1day":
               var ds = dateStart.split("-");
               axisXTitle = "從 " + formatDate(dateFromYmd(ds[0]), "/") + " " + ds[1] + ":00 起的 24 小時";
@@ -881,7 +827,7 @@
             "data": data,
             "item": chartItem,
             "type": facilityType[name[3]],
-            "chartType": chartType,
+            "interval": interval,
             "facility": facilityName,
             "axis": {"x":axisXTitle, "y":axisYTitle},
             "standard": lastStandardVal ? lastStandardVal : topValue + 10,
@@ -891,24 +837,24 @@
 
         // render chart in correct order
         var fine, added;
-        for (facility in prepared) {
+        for (var facility in prepared) {
           fine = false;
           added = 0;
           for (order in prepared[facility]) {
             var pre = prepared[facility][order];
             fine = pre.type.fine;
             if (pre.facility && !added) {
-              $root.append("<h3>"+pre.facility+"煙道</h3>");
+              $chartWrapper.append("<h3>"+pre.facility+"煙道</h3>");
             }
-            if (fine && !added && chartType == typeDefault) {
-              $root.append('<div class="section-report section-report-des"><h4>裁罰依據</h4><p>按照法規，排放超標可開罰的標準是氣狀污染物（如二氧化硫、氮氧化物、一氧化碳、氯化氫）的小時均值，以及粒狀污染物6分鐘一筆的即時監測值</p></div>');
+            if (fine && !added && interval == chartIntervalDefault) {
+              $chartWrapper.append('<div class="section-report section-report-des"><h4>裁罰依據</h4><p>按照法規，排放超標可開罰的標準是氣狀污染物（如二氧化硫、氮氧化物、一氧化碳、氯化氫）的小時均值，以及粒狀污染物6分鐘一筆的即時監測值</p></div>');
               added = 1;
             }
-            if (!fine && added < 2 && chartType == typeDefault) {
-              $root.append('<div class="section-normal section-normal-des"><h4>其他監測項目</h4><p>其他監測項目則是氣狀污染物15分鐘一筆的即時監測值，以及換算其他污染物濃度基準的監測項目</p></div>');
+            if (!fine && added < 2 && interval == chartIntervalDefault) {
+              $chartWrapper.append('<div class="section-normal section-normal-des"><h4>其他監測項目</h4><p>其他監測項目則是氣狀污染物15分鐘一筆的即時監測值，以及換算其他污染物濃度基準的監測項目</p></div>');
               added = 2;
             }
-            $root.append(pre.item);
+            $chartWrapper.append(pre.item);
             axisTitleOption.axisX.axisTitle = pre.axis.x;
             axisTitleOption.axisY.axisTitle = pre.axis.y;
             pre.option.plugins = [
@@ -936,6 +882,7 @@
               })
             ];
 
+console.log(pre.index);
             var chart = new Chartist.Line("." + pre.index, pre.data, pre.option);
             chart.on('draw', function(data) {
               if (data.type == 'line' && data.series.name == 'threshold-line') {
@@ -965,7 +912,6 @@
             });
             var additionalClass = fine ? "chart-report" : "chart-normal";
             $("."+pre.index).addClass(additionalClass);
-            chartSum++;
             count++;
           }
         }
@@ -974,19 +920,9 @@
         }
       }
 
-      var dataLoadComplete = setInterval(function() {
-        if (dataLoadNum == dataSum) {
-          // console.log("data Load Complete !! dataSum: " + dataSum);
-          dataAllLoad = true;
-          clearInterval(dataLoadComplete);
-        }
-      }, 100);
-
       var chartLoadComplete = setInterval(function() {
-        chartLoadNum = $(".ct-chart > svg").length;
 
-        if (dataAllLoad && chartLoadNum == chartSum) {
-          // console.log("chart Load Complete !! chartSum: " + chartSum);
+        if (chartAllLoad) {
           chartAllLoad = true;
           clearInterval(chartLoadComplete);
         }
@@ -1021,8 +957,8 @@
 
             var $chart       = $parent.next(".ct-chart");
             var chartID      = $chart.attr("id");
-            var chartType    = $chart.attr("data-chart-type");
-            var chartName    = $chart.attr("data-chart-name") + "（" + chartTypes[chartType] + "）";
+            var chartInterval = $chart.attr("data-chart-interval");
+            var chartName    = $chart.attr("data-chart-name") + "（" + chartInterval[interval] + "）";
             var chartDate    = [year, month, day].join("/");
             var fileNameVal  = chartID.replace(/^chart-T/, '')+'_'+ymd;
             var facilityName = $(".views-field-facility-name .field-content").text();
@@ -1046,7 +982,6 @@
               url: getURL,
               data: postData,
               success: function(chartImgURL) {
-                // console.log("成功將圖表圖片儲存於server後（ajax success），印出圖片網址： " + chartImgURL);
                 $parent.find('img.loading').remove();
 
                 var shareText = "<h5>加入監督行動，讓污染無所遁形！</h5>";
@@ -1112,39 +1047,44 @@
         }
       }, 500);
 
-      // main function
-      for(var ctype in chartTypes) {
-        var dataURL = url.replace('{type}', ctype);
-        (function(url, type){
-          Papa.parse(url, {
-            download: true,
-            complete: function(results){
-              if (type == '1day') {
-                if (chartTypesDetail['detail1day']) {
-                  var detailDataURL = url.replace('1day', 'detail1day');
+      $(".charts-wrapper").each(function(){
+        var enableIntervals = $(this).data('interval').split(','); // 1day, 30day, 6month
+        var $chartWrapper = $(this);
+        enableIntervals.forEach(function(cInterval){
+          if (Drupal.settings.envdata.all_interval[cInterval]) {
+            chartInterval[cInterval]  = Drupal.settings.envdata.all_interval[cInterval];
 
-                  Papa.parse(detailDataURL, {
-                    download: true,
-                    complete: function(results){
-                      dataDetailDay = getDetailDay(results, type);
-                      renderChart(results, type);
-                      dataLoadNum++;
+            (function(interval, $chart){
+              var url  = $chart.data('url').replace('{interval}', interval);
+              Papa.parse(url, {
+                download: true,
+                complete: function(results){
+                  if (interval == '1day') {
+                    if (chartIntervalDetail['detail1day']) {
+                      var detailDataURL = url.replace('1day', 'detail1day');
+
+                      Papa.parse(detailDataURL, {
+                        download: true,
+                        complete: function(results){
+                          dataDetailDay = getDetailDay(results, interval, $chart);
+                          renderChart(results, interval);
+                          dataLoadNum++;
+                        }
+                      });
                     }
-                  });
+                    else {    
+                      renderChart(results, interval, $chart);
+                    }
+                  }
+                  else {
+                    renderChart(results, interval, $chart);
+                  }
                 }
-                else {    
-                  renderChart(results, type);
-                }
-              }
-              else {
-                renderChart(results, type);
-              }
-
-              dataLoadNum++;
-            } 
-          });
-        })(dataURL, ctype);
-      }
+              });
+            })(cInterval, $chartWrapper);
+          }
+        });
+      });
     }); // for run only once
     },
 

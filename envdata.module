@@ -53,11 +53,15 @@ function envdata_permission(){
 
 function envdata_block_info() {
   $block['facility_realtime_charts'] = array(
-    'info' => 'envdata: facility realtime charts',
+    'info' => 'envdata: facility realtime charts of air pollution (community data)',
     'cache' => DRUPAL_NO_CACHE,
   );
   $block['facility_realtime_charts_gov'] = array(
-    'info' => 'envdata: facility realtime charts for gov',
+    'info' => 'envdata: facility realtime charts of air pollution (gov data)',
+    'cache' => DRUPAL_NO_CACHE,
+  );
+  $block['facility_realtime_charts_water'] = array(
+    'info' => 'envdata: facility realtime charts of water pollution',
     'cache' => DRUPAL_NO_CACHE,
   );
 
@@ -73,7 +77,8 @@ function envdata_block_view($delta = '') {
       if(arg(0) == 'facility' && arg(1) && empty(arg(2))){
         $vars = array(
           'registration_no' => arg(1),
-          'path' => 'realtime/air/chimney_cache_gov/{type}/' . arg(1) . '.csv',
+          'type' => 'air',
+          'path' => 'realtime/air/chimney_cache_gov/{interval}/' . arg(1) . '.csv',
         );
         $block['content'] = envdata_prepare_chart($vars);
       }
@@ -83,7 +88,18 @@ function envdata_block_view($delta = '') {
       if(arg(0) == 'facility' && arg(1) && arg(2) == 'local'){
         $vars = array(
           'registration_no' => arg(1),
-          'path' => 'realtime/air/chimney_cache/{type}/' . arg(1) . '.csv',
+          'type' => 'air',
+          'path' => 'realtime/air/chimney_cache/{interval}/' . arg(1) . '.csv',
+        );
+        $block['content'] = envdata_prepare_chart($vars);
+      }
+      break;
+    case 'facility_realtim_charts_water':
+      if(arg(0) == 'facility' && arg(1) && empty(arg(2))){
+        $vars = array(
+          'registration_no' => arg(1),
+          'type' => 'water',
+          'path' => 'realtime/water/statistics/{interval}/' . arg(1) . '.csv',
         );
         $block['content'] = envdata_prepare_chart($vars);
       }

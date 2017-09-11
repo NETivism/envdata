@@ -8,69 +8,91 @@ function envdata_prepare_chart($vars) {
       $path = $vars['path'];
     }
     else {
-      $path = 'realtime/air/chimney_cache/{type}/' . $vars['registration_no'] . '.csv';
+      $path = 'realtime/air/chimney_cache/{interval}/' . $vars['registration_no'] . '.csv';
     }
     if(empty($vars['data_url'])){
       $vars['data_url'] = $base_url . base_path(). $path;
     }
 
     // verify file exists
-    $settings = array();
+    $settings = $attributes = array();
     $settings['chartist_load'] = FALSE;
-    $settings['display_help'] = TRUE;
-    $settings['display_share'] = TRUE;
-    $settings['filter'] = !empty($vars['filter']) ? $vars['filter'] : '';
-    $settings['helplink'] = url('node/18');
     $settings['loading'] = base_path().drupal_get_path('module', 'envdata').'/loading.svg';
+    $settings['all_interval'] = _envdata_chart_interval();
+    $settings['all_interval_detail'] = _envdata_chart_interval_detail();
+    drupal_add_js(array('envdata' => $settings), 'setting');
+
+    // chart specific config into attributes
+    $attributes['id'] = 'charts-'.$vars['type'];
+    $attributes['type'] = $vars['type'];
+    $attributes['class'] = 'charts-wrapper charts-'.$vars['type'];
+    $attributes['display-help'] = TRUE;
+    $attributes['display-share'] = TRUE;
+    $attributes['filter'] = !empty($vars['filter']) ? $vars['filter'] : '';
+    $attributes['helplink'] = url('node/18');
     $pass = FALSE;
-    if(!empty($vars['type'])){
-      $all_types = _envdata_chart_types();
-      $settings['types'] = array($vars['type'] => $all_types[$vars['type']]);
-      $filename = DRUPAL_ROOT . '/'. str_replace('{type}', $vars['type'], $path);
-      $settings['display_help'] = FALSE;
-      $settings['display_share'] = FALSE;
+
+    // using by svg
+    if(!empty($vars['interval'])){
+      $all_interval = _envdata_chart_interval();
+      $attributes['interval'] = array($vars['interval'] => $all_interval[$vars['interval']]);
+      $filename = DRUPAL_ROOT . '/'. str_replace('{interval}', $vars['interval'], $path);
+      $attributes['display-help'] = 0;
+      $attributes['display-share'] = 0;
       if(file_exists($filename)){
         $pass = TRUE;
-        $settings['dataURL'] = str_replace('{type}', $vars['type'], $vars['data_url']);
+        $attributes['url'] = str_replace('{interval}', $vars['interval'], $vars['data_url']);
       }
     }
     else{
-      $types = _envdata_chart_types();
-      foreach($types as $k => $t){
-        $filename = DRUPAL_ROOT . '/' . str_replace('{type}', $k, $path);
+      $interval = _envdata_chart_interval();
+      foreach($interval as $k => $t){
+        $filename = DRUPAL_ROOT . '/' . str_replace('{interval}', $k, $path);
         if(file_exists($filename)){
           $pass = TRUE;
-          $settings['dataURL'] = $vars['data_url'];
+          $attributes['url'] = $vars['data_url'];
         }
         else{
-          unset($types[$k]);
+          unset($interval[$k]);
         }
       }
-      $settings['types'] = $types;
-    }
 
-    $types_detail = _envdata_chart_types_detail();
-    foreach ($types_detail as $k => $t) {
-      $filename = DRUPAL_ROOT . str_replace('{type}', $k, $path);
+      $attributes['interval'] = implode(',', array_keys($interval));
+      $attributes['interval-default'] = '30day';
+    }
+    $interval_detail = _envdata_chart_interval_detail();
+    foreach ($interval_detail as $k => $t) {
+      $filename = DRUPAL_ROOT . str_replace('{interval}', $k, $path);
       
       if (!file_exists($filename)) {
-        unset($types_detail[$k]);
+        unset($interval_detail[$k]);
       }
     }
-    $settings['types_detail'] = $types_detail;
+    $attributes['interval-detail'] = implode(',', array_keys($interval_detail));
 
     if($pass) {
+      $attr_str = envdata_chart_build_attr($attributes);
       envdata_add_resource();
-      drupal_add_js(array('envdata' => $settings), 'setting');
       if ($settings['display_help']) {
-        return '<div class="chart-intro">即時監測是在煙囪上裝設空氣污染物量測儀器，24小時不中斷地量測煙囪污染物排放狀況，如果監測數值出現超標，工廠無法有推托的藉口。按照法規，監測項目中，僅有二氧化硫、氮氧化物、一氧化碳、氯化氫的小時均值、及不透光率可作為裁罰依據，其餘的監測項目則是作為換算污染物濃度基準使用。</div><div id="charts"></div>';
+        return '<div class="chart-intro">即時監測是在煙囪上裝設空氣污染物量測儀器，24小時不中斷地量測煙囪污染物排放狀況，如果監測數值出現超標，工廠無法有推托的藉口。按照法規，監測項目中，僅有二氧化硫、氮氧化物、一氧化碳、氯化氫的小時均值、及不透光率可作為裁罰依據，其餘的監測項目則是作為換算污染物濃度基準使用。</div><div '.$attr_str.'></div>';
       }
-      return '<div class="chart-intro"></div><div id="charts"></div>';
+      return '<div class="chart-intro"></div><div '.$attr_str.'></div>';
     }
   }
 
   // error fallback
   return '';
+}
+
+function envdata_chart_build_attr($attributes) {
+  $attr = array();
+  foreach($attributes as $name => $value) {
+    if ($name !== 'id' && $name !== 'class') {
+      $name = 'data-'.$name;
+    }
+    $attr[$name] = $value;
+  }
+  return drupal_attributes($attr);
 }
 
 function envdata_chart_svg($chart_id) {
@@ -80,8 +102,9 @@ function envdata_chart_svg($chart_id) {
       $datetime = array_pop($chart_args);
     }
     $vars = array(
-      'type' => $chart_args[0],
-      'registration_no' => $chart_args[1],
+      'type' => $charts_args[0],
+      'interval' => $chart_args[1],
+      'registration_no' => $chart_args[2],
       'filter' => implode('_', $chart_args),
     );
     $output = envdata_prepare_chart($vars);
@@ -99,7 +122,7 @@ function envdata_chart_svg($chart_id) {
 function envdata_chart_image($chart_id) {
   global $base_url;
   $chart_args = _envdata_verify_chart_id($chart_id);
-  if(!$chart_args || count($chart_args) < 5){
+  if(!$chart_args || count($chart_args) < 6){
     drupal_not_found();
     return;
   }
@@ -154,16 +177,20 @@ function envdata_chart_image($chart_id) {
 
 function _envdata_verify_chart_id($chart_id){
   $ary = explode('_', $chart_id);
-  if(count($ary) < 4 || count($ary) > 5){
+  if(count($ary) < 5 || count($ary) > 6){
+    return FALSE;
+  }
+  $available_types = array('air', 'water');
+  if (!in_array($ary[0], $available_types)) {
     return FALSE;
   }
 
-  $available_types = _envdata_chart_types();
-  if(!array_key_exists($ary[0], $available_types)){
+  $available_interval = _envdata_chart_interval();
+  if(!array_key_exists($ary[1], $available_interval)){
     return FALSE;
   }
   
-  for ($i = 1; $i <= 3; $i++) {
+  for ($i = 2; $i <= 4; $i++) {
     $matches = array();
     preg_match('/[0-9a-z]+/i', $ary[$i], $matches);
     if(strlen($matches[0]) != strlen($ary[$i])){
@@ -174,7 +201,7 @@ function _envdata_verify_chart_id($chart_id){
   return $ary;
 }
 
-function _envdata_chart_types(){
+function _envdata_chart_interval(){
   return array(
     '1day' => '24小時', 
     '30day' => '30天',
@@ -182,7 +209,7 @@ function _envdata_chart_types(){
   );
 }
 
-function _envdata_chart_types_detail(){
+function _envdata_chart_interval_detail(){
   return array(
     'detail1day' => '24小時',
   );
