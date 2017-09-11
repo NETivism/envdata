@@ -20,6 +20,8 @@ function envdata_prepare_chart($vars) {
     $settings['loading'] = base_path().drupal_get_path('module', 'envdata').'/loading.svg';
     $settings['all_interval'] = _envdata_chart_interval();
     $settings['all_interval_detail'] = _envdata_chart_interval_detail();
+    $settings['facility_types_air_url'] = base_path().drupal_get_path('module', 'envdata').'/js/envdata-facility-air-types.json';
+    $settings['facility_types_water_url'] = base_path().drupal_get_path('module', 'envdata').'/js/envdata-facility-water-types.json';
     drupal_add_js(array('envdata' => $settings), 'setting');
 
     // chart specific config into attributes
