@@ -617,7 +617,12 @@
             var pre = prepared[facility][order];
             fine = pre.type.fine;
             if (pre.facility && !added) {
-              $chartWrapper.append("<h3>"+pre.facility+"煙道</h3>");
+              if ($chartWrapper.data("type") == 'air') {
+                $chartWrapper.append("<h3>"+pre.facility+"煙道</h3>");
+              }
+              if ($chartWrapper.data("type") == 'water') {
+                $chartWrapper.append("<h3>"+pre.facility+"監測點</h3>");
+              }
             }
             if (fine && !added && interval == $chartWrapper.data('interval-default')) {
               $chartWrapper.append('<div class="section-report section-report-des"><h4>裁罰依據</h4><p>按照法規，排放超標可開罰的標準是氣狀污染物（如二氧化硫、氮氧化物、一氧化碳、氯化氫）的小時均值，以及粒狀污染物6分鐘一筆的即時監測值</p></div>');

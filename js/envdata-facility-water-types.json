@@ -1,0 +1,65 @@
+{
+"化學需氧量": {
+  "fine": false,
+  "order": 1,
+  "desp": "化學需氧量",
+  "help": "",
+  "unit": "mg/L"
+},
+"導電度": {
+  "fine": false,
+  "order": 2,
+  "desp": "導電度",
+  "help": "",
+  "unit": "mho/cm"
+},
+"懸浮固體": {
+  "fine": false,
+  "order": 3,
+  "desp": "懸浮固體",
+  "help": "",
+  "unit": "mg/L"
+},
+"氨氮": {
+  "fine": false,
+  "order": 4,
+  "desp": "氨氮",
+  "help": "",
+  "unit": "mg/L"
+},
+"氫離子濃度": {
+  "fine": false,
+  "order": 5,
+  "desp": "氫離子濃度",
+  "help": "",
+  "unit": ""
+},
+"氫離子濃度指數": {
+  "fine": false,
+  "order": 5,
+  "desp": "氫離子濃度",
+  "help": "",
+  "unit": ""
+},
+"水溫": {
+  "fine": false,
+  "order": 6,
+  "desp": "水溫",
+  "help": "",
+  "unit": "℃"
+},
+"溫度": {
+  "fine": false,
+  "order": 6,
+  "desp": "水溫",
+  "help": "",
+  "unit": "℃"
+},
+"水量": {
+  "fine": false,
+  "order": 7,
+  "desp": "水量",
+  "help": "",
+  "unit": "M³"
+}
+}

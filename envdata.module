@@ -94,7 +94,7 @@ function envdata_block_view($delta = '') {
         $block['content'] = envdata_prepare_chart($vars);
       }
       break;
-    case 'facility_realtim_charts_water':
+    case 'facility_realtime_charts_water':
       if(arg(0) == 'facility' && arg(1) && empty(arg(2))){
         $vars = array(
           'registration_no' => arg(1),
