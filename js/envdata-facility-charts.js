@@ -6,6 +6,7 @@
     $(".charts-wrapper:not(.is-processed)", context).once('envdata', function(){
       $(this).addClass('is-processed');
 
+      var $chartWrapper = $(this);
       var loadingSvg       = Drupal.settings.envdata.loading;
       var chartAllLoad     = 0;
       var chartTotal       = 2;
@@ -261,8 +262,7 @@
       }
 
       var groupChart = function() {
-      $(".charts-wrapper").each(function(){
-        var $charts = $(this);
+        var $charts = $chartWrapper;
         var intervalDefault = $charts.data('interval-default');
         var $chartItem = $charts.find(".chart-item[data-chart-interval='"+intervalDefault+"']");
         
@@ -309,11 +309,9 @@
             ga('send', 'event', 'chart', 'tab-'+cInterval, $thisTabs.attr('id'));
           });
         });
-
-      });
       }
 
-      var getDetailDay = function(results, interval, $chartWrapper) {
+      var getDetailDay = function(results, interval) {
         var values = {};
         var i, indexo, row, index, value, time;
         var type = $chartWrapper.data('type');
@@ -398,7 +396,7 @@
         return output;
       }
 
-      var renderChart = function(results, interval, $chartWrapper, facilityType){
+      var renderChart = function(results, interval, facilityType){
         // two level object
         var values = {};
         var i, indexo, row, index, datehour, max, avg, threshold;
@@ -822,52 +820,49 @@
       }, 500);
 
       // main function
-      $(".charts-wrapper").each(function(){
-        var enableIntervals = $(this).data('interval').split(','); // 1day, 30day, 6month
-        chartTotal = enableIntervals.length;
-        var $chartWrapper = $(this);
-        enableIntervals.forEach(function(cInterval){
-          if (Drupal.settings.envdata.all_interval[cInterval]) {
-            chartInterval[cInterval]  = Drupal.settings.envdata.all_interval[cInterval];
+      var enableIntervals = $(this).data('interval').split(','); // 1day, 30day, 6month
+      chartTotal = enableIntervals.length;
+      enableIntervals.forEach(function(cInterval){
+        if (Drupal.settings.envdata.all_interval[cInterval]) {
+          chartInterval[cInterval]  = Drupal.settings.envdata.all_interval[cInterval];
 
-            (function(interval, $chart){
-              var url  = $chart.data('url').replace('{interval}', interval);
-              Papa.parse(url, {
-                download: true,
-                complete: function(results){
-                  var facilityUrl = 'facility_types_' + $chart.data('type') + '_url';
-                  var facilityType;
-                  if (Drupal.settings.envdata[facilityUrl]) {
-                    facilityType = $.getJSON(Drupal.settings.envdata[facilityUrl], function(data){
-                      facilityType = data;
-                      if (interval == '1day') {
-                        if (chartIntervalDetail['detail1day']) {
-                          var detailDataURL = url.replace('1day', 'detail1day');
+          (function(interval){
+            var url  = $chartWrapper.data('url').replace('{interval}', interval);
+            Papa.parse(url, {
+              download: true,
+              complete: function(results){
+                var facilityUrl = 'facility_types_' + $chartWrapper.data('type') + '_url';
+                var facilityType;
+                if (Drupal.settings.envdata[facilityUrl]) {
+                  facilityType = $.getJSON(Drupal.settings.envdata[facilityUrl], function(data){
+                    facilityType = data;
+                    if (interval == '1day') {
+                      if (chartIntervalDetail['detail1day']) {
+                        var detailDataURL = url.replace('1day', 'detail1day');
 
-                          Papa.parse(detailDataURL, {
-                            download: true,
-                            complete: function(results){
-                              dataDetailDay = getDetailDay(results, interval, $chart, facilityType);
-                              renderChart(results, interval);
-                              dataLoadNum++;
-                            }
-                          });
-                        }
-                        else {    
-                          renderChart(results, interval, $chart, facilityType);
-                        }
+                        Papa.parse(detailDataURL, {
+                          download: true,
+                          complete: function(results){
+                            dataDetailDay = getDetailDay(results, interval, facilityType);
+                            renderChart(results, interval);
+                            dataLoadNum++;
+                          }
+                        });
                       }
-                      else {
-                        renderChart(results, interval, $chart, facilityType);
+                      else {    
+                        renderChart(results, interval, facilityType);
                       }
-                      chartAllLoad++;
-                    });
-                  }
+                    }
+                    else {
+                      renderChart(results, interval, facilityType);
+                    }
+                    chartAllLoad++;
+                  });
                 }
-              });
-            })(cInterval, $chartWrapper);
-          }
-        });
+              }
+            });
+          })(cInterval);
+        }
       });
     }); // for run only once
     },
