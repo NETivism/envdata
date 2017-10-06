@@ -87,6 +87,17 @@
         return ISOweekStart;
       }
 
+      var missingThreshold = function(dataThreshold, length) {
+        if (dataThreshold.length < length) {
+          var lastVal = dataThreshold[dataThreshold.length-1];
+          var missing = length - dataThreshold.length;
+          for (var i = 0; i < missing; i++) {
+            dataThreshold.push(lastVal);
+          }
+        }
+        return dataThreshold;
+      }
+
       var missingHours = function(obj) {
         var robj = {}, timestamp;
         for(var key in obj){
@@ -479,8 +490,10 @@
           
           // Reordering object in the beginning to ensure order of time is correct
           values[index] = sortObj(values[index]);
-          
-          var dateStart = Object.keys(values[index])[0];
+
+          var dateKeys = Object.keys(values[index]);
+          var dateStart = dateKeys[0];
+          var dateEnd = dateKeys[dateKeys.length-1];
           
           if(interval == '1day') {
             values[index] = missingHours(values[index]);
@@ -503,7 +516,8 @@
 
           var keys = Object.keys(values[index]);
           var exceed = false;
-          var topValue = null;
+          var highestValue = null;
+          var lowestValue = null;
           var lastMonitorId = null;
           var lastStandardVal = 0;
 
@@ -557,28 +571,53 @@
 
             // If threshold value more than max data 
             v[0] = parseInt(v[0]);
-            v[1] = parseInt(v[1]);
-            topValue = topValue === undefined ? topValue = v[0] : topValue < v[0] ? topValue = v[0] : topValue = topValue;
-            
-            if (i == keys.length - 1) {
-              if (v[1]) {
-                if (v[1] >= topValue) {
-                  v[1] += 10;
-                  chartOption.high = v[1];
-                } 
-                else {
-                  exceed = true;
-                }
-              }
-
-            }
+            highestValue = highestValue === undefined ? highestValue = v[0] : highestValue < v[0] ? highestValue = v[0] : highestValue = highestValue;
+            lowestValue = lowestValue === undefined ? lowestValue = v[0] : lowestValue > v[0] ? lowestValue = v[0] : lowestValue = lowestValue;
           }
+
           // add thresholdLine
+          // and check chart top and bottom value
           if (thresholdLine1.length) {
+            thresholdLine1 = missingThreshold(thresholdLine1, dataVals.length);
             data["series"].push({ className: 'ct-series ct-series-a ct-series-threshold', name: "threshold-line-1", data: thresholdLine1 });
           }
           if (thresholdLine2.length) {
+            thresholdLine2 = missingThreshold(thresholdLine2, dataVals.length);
             data["series"].push({ className: 'ct-series ct-series-a ct-series-threshold', name: "threshold-line-2", data: thresholdLine2 });
+          }
+          var standard = 0;
+          if (typeof lastStandardVal['th2'] !== 'undefined') {
+            standard = [lastStandardVal['th1'], lastStandardVal['th2']];
+          }
+          else if (typeof lastStandardVal['th1'] !== 'undefined') {
+            standard = lastStandardVal['th1'];
+          }
+          if (standard) {
+            if (Array.isArray(standard)) {
+              if (lowestValue > standard[0]) {
+                chartOption.low = standard[0] - 50 < 0 ? 0 : standard[0] - 50;
+              }
+              if (highestValue < standard[1]) {
+                chartOption.high = standard[1] + 50;
+              }
+              if (highestValue > standard[1] || lowestValue < standard[0]) {
+                exceed = true;
+              }
+            }
+            else {
+              chartOption.low = 0; 
+              if (highestValue < standard) {
+                chartOption.high = standard + 50;
+                chartOption.referenceValue = standard;
+              }
+              if (highestValue > standard) {
+                exceed = true;
+              }
+            }
+          }
+          else {
+            standard = highestValue + 50;  
+            chartOption.high = highestValue + 50;
           }
 
           var chartID = index;
@@ -602,7 +641,7 @@
           chartItem += title; 
           
           if(chartBtn){
-            chartItem += "<div class='chart-btns'><a class='help-link colorbox-node' href='"+Drupal.settings.envdata.helplink+"' title='怎樣是排放超標？怎樣才達到違法要開罰的標準？' target='_blank'><span class='fa fa-question-circle'></span>超標說明</a>" + chartBtn + "</div>";
+            chartItem += "<div class='chart-btns'><a class='help-link colorbox-node' href='"+$chartWrapper.data('helplink')+"' title='怎樣是排放超標？怎樣才達到違法要開罰的標準？' target='_blank'><span class='fa fa-question-circle'></span>超標說明</a>" + chartBtn + "</div>";
           }
           chartItem += "<div id='" + chartID + "' class='" + chartID + " chart ct-chart' data-chart-name='" + chartName  + "' data-chart-interval='" + interval + "'></div>";
           chartItem += "</div>";
@@ -621,12 +660,13 @@
               break;
 
             case "30day":
-              axisXTitle = "從 " + formatDate(dateFromYmd(dateStart), "/") + " 起的 30 天";
+              axisXTitle = "從 " + formatDate(dateFromYmd(dateStart), "/") + " ~ " + formatDate(dateFromYmd(dateEnd), '/') + "（單位：天）";
               break;
 
             case "6month":
               var ds = dateStart.split("-");
-              axisXTitle = "從 " + formatDate(getDateOfISOWeek(ds[1], ds[0]), "/") + " 起的半年（單位：週）";
+              var ds2 = dateEnd.split('-');
+              axisXTitle = "從 " + formatDate(getDateOfISOWeek(ds[1], ds[0]), "/") + " ~ " + formatDate(getDateOfISOWeek(ds2[1], ds2[0]), "/") +" （單位：週）";
               break;
           } 
 
@@ -636,16 +676,6 @@
           }
           if (typeof prepared[name[2]][order] == 'undefined') {
             prepared[name[2]][order] = {};
-          }
-          var standard = 0;
-          if (typeof lastStandardVal['th2'] !== 'undefined') {
-            standard = [lastStandardVal['th1'], lastStandardVal['th2']];
-          }
-          else if (typeof lastStandardVal['th1'] !== 'undefined') {
-            standard = lastStandardVal['th1'];
-          }
-          if (!standard) {
-            standard = topValue + 10;  
           }
           prepared[name[2]][order] = {
             "index": index,
@@ -757,10 +787,6 @@
         if (chartAllLoad >= chartTotal) {
           clearInterval(chartLoadComplete);
 
-          // remove standard
-          $('g.ct-series-threshold path.ct-threshold-below').remove();
-          $('g.ct-series-threshold path').removeAttr('mask');
-
           // Set chartist_load is true after gerenate all charts.
           $('.colorbox-node', context).once('init-colorbox-node-processed', function () {
             $(this).colorboxNode({'launch': false});
@@ -768,6 +794,12 @@
 
           // Group chart
           groupChart();
+
+          // remove mask of standard
+          setTimeout(function() {
+            $('g.ct-series-threshold path.ct-threshold-below').remove();
+            $('g.ct-series-threshold path.ct-threshold-above').removeAttr('mask');
+          }, 1500);
           Drupal.settings.envdata.chartist_load = true;
 
           // Show a share preview modal when user click chart share button.
