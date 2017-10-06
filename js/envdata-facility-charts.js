@@ -140,7 +140,12 @@
           total = firstHalf + secondHalf;
         }
 
-        var threshold = parseInt(obj[begin][1]) || 0;
+        if (Array.isArray(threshold) && threshold.length == 2) {
+          var threshold = obj[begin][1];
+        }
+        else {
+          var threshold = parseInt(obj[begin][1]) || 0;
+        }
         var currentWeek = firstWeek;
         var currentYear = firstYear;
         var key = begin;
@@ -421,9 +426,39 @@
           }
 
           if(include) {
+            threshold = {};
             max = row[3];
             avg = row[4];
-            threshold = row[6] || 0;
+            // special case for water temprature
+            if (row[2] == '水溫' && row[5]) {
+              threshold = {"th1":row[6]};
+              var parse = row[5].match(/^\d\d\d\d(\d\d)/);
+              if (parse != null && typeof parse[1] !== 'undefined') {
+                var month = parseInt(parse[1]);
+                if (month < 10 && month > 3 && row[7]) {
+                  threshold = {"th1":row[7]};
+                }
+              }
+            }
+            else {
+              if (row[6]) {
+                row[6] = parseInt(row[6]);
+                row[6] = row[6] < 99999 && row[6] > 0 ? row[6] : 0;
+              }
+              if (row[7]) {
+                row[7] = parseInt(row[7]);
+                row[7] = row[7] < 99999 && row[7] > 0 ? row[7] : 0;
+              }
+              if (row[6] && row[7]) {
+                threshold = {"th1":row[6], "th2":row[7]};
+              }
+              else if (row[6]) {
+                threshold = {"th1":row[6]};
+              }
+              else if (row[7]) {
+                threshold = {"th1":row[7]};
+              }
+            }
             // new factory
             if(typeof values[index] === "undefined"){
               values[index] = [];
@@ -456,12 +491,12 @@
           }
 
           var dataVals = [];
-          var thresholdVals = [];
+          var thresholdLine1 = [];
+          var thresholdLine2 = [];
 
           data = {
             "labels": [],
             "series": [
-              { className: 'ct-series ct-series-a ct-series-threshold', name: "threshold-line", data: thresholdVals },
               { data: dataVals }
             ]
           }
@@ -495,13 +530,15 @@
             var v = values[index][k];
 
             // push data to threshold line
-            v[1] = v[1] == 0 ? "" : v[1];
-            if (!v[1]) {
-              v[1] = lastStandardVal;
+            var thresholdV = v[1];
+            if (thresholdV['th1']) { 
+              thresholdLine1.push(thresholdV['th1']);
             }
-            if (v[1]) {
-              thresholdVals.push(v[1]);
-              lastStandardVal = v[1];
+            if (thresholdV['th2']) {
+              thresholdLine2.push(thresholdV['th2']);
+            }
+            if (thresholdV['th1'] || thresholdV['th2']) {
+              lastStandardVal = thresholdV;
             }
 
             // push data to data line
@@ -535,6 +572,13 @@
               }
 
             }
+          }
+          // add thresholdLine
+          if (thresholdLine1.length) {
+            data["series"].push({ className: 'ct-series ct-series-a ct-series-threshold', name: "threshold-line-1", data: thresholdLine1 });
+          }
+          if (thresholdLine2.length) {
+            data["series"].push({ className: 'ct-series ct-series-a ct-series-threshold', name: "threshold-line-2", data: thresholdLine2 });
           }
 
           var chartID = index;
@@ -593,6 +637,16 @@
           if (typeof prepared[name[2]][order] == 'undefined') {
             prepared[name[2]][order] = {};
           }
+          var standard = 0;
+          if (typeof lastStandardVal['th2'] !== 'undefined') {
+            standard = [lastStandardVal['th1'], lastStandardVal['th2']];
+          }
+          else if (typeof lastStandardVal['th1'] !== 'undefined') {
+            standard = lastStandardVal['th1'];
+          }
+          if (!standard) {
+            standard = topValue + 10;  
+          }
           prepared[name[2]][order] = {
             "index": index,
             "data": data,
@@ -601,7 +655,7 @@
             "interval": interval,
             "facility": facilityName,
             "axis": {"x":axisXTitle, "y":axisYTitle},
-            "standard": lastStandardVal ? lastStandardVal : topValue + 10,
+            "standard": standard,
             "option": chartOption
           };
         }
@@ -654,17 +708,21 @@
                 maskNames: {
                   aboveThreshold: 'ct-threshold-' +pre.index + '-above',
                   belowThreshold: 'ct-threshold-' +pre.index + '-below',
+                  belowOverThreshold: 'ct-threshold-' +pre.index + '-below-over',
                 }
               })
             ];
 
+            /* Draw Chart here!!! */
             var chart = new Chartist.Line("." + pre.index, pre.data, pre.option);
+
+            /* Hook after draw */
             chart.on('draw', function(data) {
-              if (data.type == 'line' && data.series.name == 'threshold-line') {
-                if (typeof data.values["0"] != 'undefined') {
+              if (data.type == 'line' && typeof data.series.name === 'string' && data.series.name.match(/^threshold-line/)) {
+                if (typeof data.values[0]["y"] !== 'undefined') {
                   var axisX = data.axisX.axisLength + data.axisX.gridOffset + 15;
-                  var axisY = data.axisY.axisLength == data.path.pathElements["0"].y ? data.path.pathElements["0"].y - 10 : data.path.pathElements["0"].y;
-                  var val = data.values["0"].y;
+                  var axisY = data.axisY.axisLength == data.path.pathElements[0]["y"] ? data.path.pathElements[0]["y"] - 10 : data.path.pathElements[0]["y"];
+                  var val = data.values[0]["y"];
                   
                   var caption = new Chartist.Svg('g');
                   caption.addClass('ct-threshold-caption');
