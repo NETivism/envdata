@@ -571,8 +571,8 @@
 
             // If threshold value more than max data 
             v[0] = parseInt(v[0]);
-            highestValue = highestValue === undefined ? highestValue = v[0] : highestValue < v[0] ? highestValue = v[0] : highestValue = highestValue;
-            lowestValue = lowestValue === undefined ? lowestValue = v[0] : lowestValue > v[0] ? lowestValue = v[0] : lowestValue = lowestValue;
+            highestValue = highestValue === null ? highestValue = v[0] : highestValue < v[0] ? highestValue = v[0] : highestValue = highestValue;
+            lowestValue = lowestValue === null ? lowestValue = v[0] : lowestValue > v[0] ? lowestValue = v[0] : lowestValue = lowestValue;
           }
 
           // add thresholdLine
@@ -600,7 +600,7 @@
               if (highestValue < standard[1]) {
                 chartOption.high = standard[1] + 50;
               }
-              if (highestValue > standard[1] || lowestValue < standard[0]) {
+              if (highestValue > standard[1] || (lowestValue < standard[0] && lowestValue !== 0)) {
                 exceed = true;
               }
             }
