@@ -4,7 +4,6 @@
   Drupal.behaviors.envdata = {
     attach: function (context, settings) {
     $(".charts-wrapper:not(.is-processed)", context).once('envdata', function(){
-      $(this).addClass('is-processed');
 
       var $chartWrapper = $(this);
       var loadingSvg       = Drupal.settings.envdata.loading;
@@ -786,6 +785,12 @@
       var chartLoadComplete = setInterval(function() {
         if (chartAllLoad >= chartTotal) {
           clearInterval(chartLoadComplete);
+          $chartWrapper.addClass('is-processed');
+
+          // all warpper done in this page
+          if ($(".charts-wrapper:not('.is-processed')").length == 0) {
+            Drupal.settings.envdata.chartist_load = true;
+          }
 
           // Set chartist_load is true after gerenate all charts.
           $('.colorbox-node', context).once('init-colorbox-node-processed', function () {
@@ -800,7 +805,6 @@
             $('g.ct-series-threshold path.ct-threshold-below').remove();
             $('g.ct-series-threshold path.ct-threshold-above').removeAttr('mask');
           }, 1500);
-          Drupal.settings.envdata.chartist_load = true;
 
           // Show a share preview modal when user click chart share button.
           $(".chart-btns").on("click", ".chart-btn", function(e) {
