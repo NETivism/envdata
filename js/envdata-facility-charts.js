@@ -441,12 +441,12 @@
             avg = row[4];
             // special case for water temprature
             if (row[2] == '水溫' && row[5]) {
-              threshold = {"th1":row[6]};
+              threshold = {"th1":Number(row[6])};
               var parse = row[5].match(/^\d\d\d\d(\d\d)/);
               if (parse != null && typeof parse[1] !== 'undefined') {
                 var month = parseInt(parse[1]);
-                if (month < 10 && month > 3 && row[7]) {
-                  threshold = {"th1":row[7]};
+                if (month < 10 && month > 3 && row[7] > 0) {
+                  threshold = {"th1":Number(row[7])};
                 }
               }
             }
