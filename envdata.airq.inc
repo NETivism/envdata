@@ -6,7 +6,7 @@ function envdata_airq_update_gov_file(){
   $hour = date('H');
   $cache = "$dir/airq_{$hour}.json";
 
-  $latest = file_get_contents('http://opendata.epa.gov.tw/ws/Data/AQX/?$orderby=SiteName&$skip=0&$top=1000&format=json');
+  $latest = file_get_contents('http://opendata2.epa.gov.tw/AQI.json');
   file_save_data($latest, $cache, FILE_EXISTS_REPLACE);
 
   // update station
