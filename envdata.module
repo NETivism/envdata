@@ -30,10 +30,10 @@ function envdata_menu() {
     'type' => MENU_CALLBACK,
     'file' => 'envdata.chart.inc',
   );
-  $items['envdata/csv/%/%'] = array(
+  $items['envdata/csv/%/%/%'] = array(
     'title' => 'render svg to html',
     'page callback' => 'envdata_csv',
-    'page arguments' => array(2, 3),
+    'page arguments' => array(2, 3, 4),
     'access arguments' => array('export envdata'),
     'type' => MENU_CALLBACK,
     'file' => 'envdata.csv.inc',
