@@ -621,6 +621,9 @@
 
           var chartID = index;
           var chartGID = name[1] + "_" + name[2] + "_" + name[3];
+          if (typeof facilityType[name[3]] === 'undefined') {
+            continue;
+          }
           var fine = facilityType[name[3]]["fine"];
           var knowledgeUrl = "";
           if (facilityType[name[3]]["help"]) {
@@ -923,6 +926,7 @@
           (function(interval){
             var url  = $chartWrapper.data('url').replace('{interval}', interval);
             Papa.parse(url, {
+              encoding: 'UTF-8',
               download: true,
               complete: function(results){
                 var facilityUrl = 'facility_types_' + $chartWrapper.data('type') + '_url';
@@ -935,6 +939,7 @@
                         var detailDataURL = url.replace('1day', 'detail1day');
 
                         Papa.parse(detailDataURL, {
+                          encoding: 'UTF-8',
                           download: true,
                           complete: function(results){
                             dataDetailDay = getDetailDay(results, interval, facilityType);
