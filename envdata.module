@@ -8,9 +8,18 @@ function envdata_init(){
 }
 
 function envdata_cron(){
+  // change to /var/www/html/realtime/airq
+  /*
   module_load_include('inc', 'envdata', 'envdata.airq');
+  module_load_include('inc', 'envdata', 'envdata.notify');
   envdata_airq_update_gov_file();
   envdata_airq_create_geojson();
+  $last_notify = variable_get('envdata_notify_last', 0);
+  if (time() - $last_notify > 86000 && date('G') == '6') {
+    envdata_notify();
+    variable_set('envdata_notify_last', time());
+  }
+  */
 }
 
 function envdata_menu() {
