@@ -15,7 +15,8 @@ function envdata_csv($freq, $registration_no, $type){
       else {
         $cmd = '/usr/bin/php /var/www/html/realtime/air/4_statistics.inc '. $freq;
       }
-      shell_exec($cmd);
+      $output = shell_exec($cmd);
+      watchdog('envdata', $cmd.":::".$output);
       if(file_exists($file) && filesize($file)) {
         $found = TRUE;
         envdata_csv_export($file, $registration_no.'_'.$freq.'.csv');
@@ -35,7 +36,8 @@ function envdata_csv($freq, $registration_no, $type){
       else {
         $cmd = '/usr/bin/php /var/www/html/realtime/water/3_statistics.inc '. $freq;
       }
-      shell_exec($cmd);
+      $output = shell_exec($cmd);
+      watchdog('envdata', $cmd.":::".$output);
       if(file_exists($file) && filesize($file)) {
         $found = TRUE;
         envdata_csv_export($file, $registration_no.'_'.$freq.'.csv');
