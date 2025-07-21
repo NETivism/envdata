@@ -3,7 +3,28 @@ function envdata_csv($freq, $registration_no, $type){
   $found = FALSE;
   $name = db_query("SELECT facility_name FROM {factory} WHERE registration_no = :rid", array('rid' => $registration_no))->fetchField();
   if(!empty($name) && $type == 'air'){
-    $file = '/var/www/html/realtime/air/chimney_cache/'.$freq.'/'.$registration_no.'.csv';
+    $file = '/var/www/html/realtime/air/chimney_cache_gov/'.$freq.'/'.$registration_no.'.csv';
+    if(file_exists($file) && filesize($file) && REQUEST_TIME - filemtime($file) < 86400) {
+      $found = TRUE;
+      envdata_csv_export($file, $registration_no.'_'.$freq.'.csv');
+    }
+    else{
+      if($freq == 'overalltime'){
+        $cmd = '/usr/bin/php /var/www/html/realtime/air/5_statistics_gov.inc '. $freq.' '.$registration_no;
+      }
+      else {
+        $cmd = '/usr/bin/php /var/www/html/realtime/air/5_statistics_gov.inc '. $freq;
+      }
+      $output = shell_exec($cmd);
+      watchdog('envdata', $cmd.":::".$output);
+      if(file_exists($file) && filesize($file)) {
+        $found = TRUE;
+        envdata_csv_export($file, $registration_no.'_'.$freq.'.csv');
+      }
+    }
+  }
+  if(!empty($name) && $type == 'airold'){
+    $file = '/var/www/html/realtime/air/chimney_cache/'.$freq.'/'.$registration_no.'_old.csv';
     if(file_exists($file) && filesize($file) && REQUEST_TIME - filemtime($file) < 86400) {
       $found = TRUE;
       envdata_csv_export($file, $registration_no.'_'.$freq.'.csv');
@@ -19,7 +40,7 @@ function envdata_csv($freq, $registration_no, $type){
       watchdog('envdata', $cmd.":::".$output);
       if(file_exists($file) && filesize($file)) {
         $found = TRUE;
-        envdata_csv_export($file, $registration_no.'_'.$freq.'.csv');
+        envdata_csv_export($file, $registration_no.'_'.$freq.'_before_20170123.csv');
       }
     }
   }

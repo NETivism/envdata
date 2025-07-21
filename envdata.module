@@ -40,7 +40,7 @@ function envdata_menu() {
     'file' => 'envdata.chart.inc',
   );
   $items['envdata/csv/%/%/%'] = array(
-    'title' => 'render svg to html',
+    'title' => 'Get CSV',
     'page callback' => 'envdata_csv',
     'page arguments' => array(2, 3, 4),
     'access arguments' => array('export envdata'),
